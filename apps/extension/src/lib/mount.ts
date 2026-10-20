@@ -46,6 +46,24 @@ export function startMount(deps: MountDeps): { stop(): void } {
   let observer: MutationObserver | null = null;
   let frame = 0;
   let unsubscribe: (() => void) | null = null;
+  let undecorate: (() => void) | null = null;
+
+  // The page's own +/− counter becomes the hover trigger, underlined like ours.
+  function decorate(target: Element | null): void {
+    undecorate?.();
+    undecorate = null;
+    if (!target || !widget || !(target instanceof HTMLElement)) return;
+    const { style } = target;
+    const before = [style.textDecoration, style.textUnderlineOffset, style.cursor] as const;
+    style.textDecoration = 'underline dotted rgba(128, 128, 128, 0.8)';
+    style.textUnderlineOffset = '3px';
+    style.cursor = 'default';
+    const detach = widget.attachTrigger(target);
+    undecorate = () => {
+      detach();
+      [style.textDecoration, style.textUnderlineOffset, style.cursor] = before;
+    };
+  }
 
   function paint(): void {
     if (!widget) return;
@@ -85,6 +103,7 @@ export function startMount(deps: MountDeps): { stop(): void } {
 
     const text = found.counter?.textContent ?? null;
     const counterChanged = found.counter !== counter || text !== counterText;
+    if (found.counter !== counter || created) decorate(found.counter);
     counter = found.counter;
     counterText = text;
     if (created || counterChanged) paint();
@@ -127,6 +146,7 @@ export function startMount(deps: MountDeps): { stop(): void } {
     if (frame) win.cancelAnimationFrame(frame);
     frame = 0;
     widget?.host.remove();
+    decorate(null);
     counter = null;
     counterText = null;
   }
