@@ -47,16 +47,67 @@ describe('widget', () => {
     expect(host.shadowRoot).not.toBeNull();
   });
 
-  it('keeps a fixed 56px width in every state', () => {
-    const { host, setState } = make();
-    const widths: string[] = [host.style.width];
-    setState({ kind: 'loading' });
-    widths.push(host.style.width);
+  it('keeps the bar at a fixed 56px width in every state', () => {
+    const { setState, root } = make();
+    const css = root.querySelector('style')!.textContent ?? '';
+    expect(/\.bar\s*\{[^}]*width:\s*56px/.test(css)).toBe(true);
+    for (const s of [
+      { kind: 'loading' },
+      { kind: 'ready', breakdown, page: null },
+      { kind: 'auth-required', host: 'github' },
+    ] as const) {
+      setState(s);
+      expect(root.querySelector('.trigger .bar')).not.toBeNull();
+    }
+  });
+
+  it('shows its own dotted-underlined +/− total when the page has no counter', () => {
+    const { setState, root } = make();
     setState({ kind: 'ready', breakdown, page: null });
-    widths.push(host.style.width);
-    setState({ kind: 'auth-required', host: 'github' });
-    widths.push(host.style.width);
-    expect(new Set(widths)).toEqual(new Set(['56px']));
+    expect(root.querySelector('.trigger .nums')!.textContent).toBe('+1,505 −35');
+    const css = root.querySelector('style')!.textContent ?? '';
+    expect(/\.nums\s*\{[^}]*underline dotted/.test(css)).toBe(true);
+  });
+
+  it('shows no numbers of its own next to a page counter, nor while loading', () => {
+    const { setState, root } = make();
+    setState({ kind: 'ready', breakdown, page: { additions: 1505, deletions: 35, capped: false } });
+    expect(root.querySelector('.nums')!.textContent).toBe('');
+    setState({ kind: 'loading' });
+    expect(root.querySelector('.nums')!.textContent).toBe('');
+  });
+
+  it('opens from an attached trigger and stops after detaching', () => {
+    vi.useFakeTimers();
+    const { host, attachTrigger } = make();
+    const counterEl = document.createElement('span');
+    document.body.append(counterEl);
+    const detach = attachTrigger(counterEl);
+    counterEl.dispatchEvent(new MouseEvent('mouseenter'));
+    expect(host.hasAttribute('open')).toBe(true);
+    counterEl.dispatchEvent(new MouseEvent('mouseleave'));
+    host.dispatchEvent(new MouseEvent('mouseenter'));
+    vi.advanceTimersByTime(500);
+    expect(host.hasAttribute('open')).toBe(true);
+    host.dispatchEvent(new MouseEvent('mouseleave'));
+    vi.advanceTimersByTime(500);
+    expect(host.hasAttribute('open')).toBe(false);
+    detach();
+    counterEl.dispatchEvent(new MouseEvent('mouseenter'));
+    expect(host.hasAttribute('open')).toBe(false);
+    vi.useRealTimers();
+  });
+
+  it('shows the hovered row description in the hint line', () => {
+    const { setState, root } = make();
+    setState({ kind: 'ready', breakdown, page: null });
+    const hint = root.querySelector('.hint')!;
+    const first = root.querySelector<HTMLElement>('.row[data-desc]')!;
+    first.dispatchEvent(new MouseEvent('mouseenter'));
+    expect(hint.textContent).toBe(first.dataset.desc);
+    expect(hint.textContent).toContain('4 files.');
+    first.dispatchEvent(new MouseEvent('mouseleave'));
+    expect(hint.textContent).toBe('Hover a row to see what it counts.');
   });
 
   it('renders one segment per non-empty bucket sized by lines changed', () => {
@@ -153,12 +204,16 @@ describe('widget', () => {
     expect(host.style.display).toBe('');
   });
 
-  it('opens on mouseenter/focusin and closes on mouseleave/focusout', () => {
+  it('opens on mouseenter/focusin and closes shortly after mouseleave, or on focusout', () => {
+    vi.useFakeTimers();
     const { host } = make();
     host.dispatchEvent(new Event('mouseenter'));
     expect(host.hasAttribute('open')).toBe(true);
     host.dispatchEvent(new Event('mouseleave'));
+    expect(host.hasAttribute('open')).toBe(true);
+    vi.advanceTimersByTime(200);
     expect(host.hasAttribute('open')).toBe(false);
+    vi.useRealTimers();
     host.dispatchEvent(new Event('focusin'));
     expect(host.hasAttribute('open')).toBe(true);
     host.dispatchEvent(new Event('focusout'));
@@ -181,7 +236,7 @@ describe('widget', () => {
     const pop = /\.pop\s*\{([^}]*)\}/.exec(css)![1]!;
     const bridge = /\.pop::before\s*\{([^}]*)\}/.exec(css)?.[1] ?? '';
     const px = (src: string, prop: string) => Number(new RegExp(`(?:^|[\\s;])${prop}:\\s*(-?\\d+)px`).exec(src)?.[1]);
-    expect(px(pop, 'top')).toBe(6);
+    expect(/(?:^|[\s;])top:\s*100%/.test(pop)).toBe(true);
     expect(bridge).not.toBe('');
     expect(px(bridge, 'height')).toBeGreaterThanOrEqual(px(pop, 'margin-top'));
   });
@@ -260,15 +315,18 @@ describe('widget', () => {
     });
 
     it('clears the alignment when reopened near the left edge', () => {
+      vi.useFakeTimers();
       const { host } = make();
       setViewport(1440);
       stubHost(host, 1360);
       hover(host);
       expect(host.getAttribute('data-align')).toBe('end');
       host.dispatchEvent(new MouseEvent('mouseleave'));
+      vi.advanceTimersByTime(200);
       stubHost(host, 100);
       hover(host);
       expect(host.hasAttribute('data-align')).toBe(false);
+      vi.useRealTimers();
     });
 
     it('realigns when the content grows while the popover is open', () => {

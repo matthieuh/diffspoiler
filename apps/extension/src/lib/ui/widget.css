@@ -1,25 +1,31 @@
-:host { display: inline-block; vertical-align: middle; position: relative; width: 56px; margin: 0 8px; height: 6px; line-height: 1; outline: none; --add: #1a7f37; --del: #cf222e; --bg: #fff; --fg: #1f2328; --mut: #656d76; --bd: #d0d7de; }
-:host([data-theme='dark']) { --add: #3fb950; --del: #f85149; --bg: #161b22; --fg: #e6edf3; --mut: #8b949e; --bd: #30363d; }
-:host([hidden]) { display: none; }
-.bar { display: flex; width: 56px; height: 6px; border-radius: 3px; overflow: hidden; background: var(--bd); gap: 1px; }
+:host { display: inline-block; vertical-align: middle; position: relative; margin: 0 8px; line-height: 1; outline: none; --add: #1a7f37; --del: #cf222e; --fg: #1f2328; --mut: #656d76; --bd: rgba(31, 35, 40, 0.12); --glass: rgba(255, 255, 255, 0.72); --track: #d0d7de; }
+:host([data-theme='dark']) { --add: #3fb950; --del: #f85149; --fg: #e6edf3; --mut: #8b949e; --bd: rgba(240, 246, 252, 0.14); --glass: rgba(22, 27, 34, 0.68); --track: #30363d; }
+.trigger { display: inline-flex; align-items: center; gap: 6px; height: 20px; cursor: default; }
+.nums { font: 600 12px/20px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-variant-numeric: tabular-nums; text-decoration: underline dotted var(--mut); text-underline-offset: 3px; white-space: nowrap; }
+.nums:empty { display: none; }
+.bar { display: flex; width: 56px; height: 6px; border-radius: 3px; overflow: hidden; background: var(--track); gap: 1px; }
 .seg { flex-basis: 0; min-width: 2px; }
 .bar.loading { opacity: 0.5; animation: pulse 1.2s ease-in-out infinite; }
 .bar.auth { background: transparent; outline: 1px dashed var(--mut); outline-offset: -1px; }
 @keyframes pulse { 50% { opacity: 0.2; } }
-:host(:focus-visible) .bar { outline: 2px solid #4493f8; outline-offset: 2px; }
-.pop { display: none; margin-top: 8px; position: absolute; top: 6px; left: 0; z-index: 2147483647; min-width: 250px; padding: 10px 12px; border: 1px solid var(--bd); border-radius: 8px; background: var(--bg); color: var(--fg); box-shadow: 0 8px 24px rgba(1, 4, 9, 0.25); font: 12px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; white-space: nowrap; }
-/* Bridges the host/popover gap so the pointer can reach the popover without mouseleave. */
+:host(:focus-visible) .trigger { outline: 2px solid #4493f8; outline-offset: 2px; border-radius: 4px; }
+.pop { display: none; position: absolute; top: 100%; margin-top: 6px; left: 0; z-index: 2147483647; min-width: 250px; padding: 10px 12px; border: 1px solid var(--bd); border-radius: 12px; background: var(--glass); -webkit-backdrop-filter: blur(16px) saturate(180%); backdrop-filter: blur(16px) saturate(180%); color: var(--fg); box-shadow: 0 12px 32px rgba(1, 4, 9, 0.22), 0 1px 2px rgba(1, 4, 9, 0.08); font: 12px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; white-space: nowrap; }
+/* Bridges the trigger/popover gap so the pointer can reach the popover without closing it. */
 .pop::before { content: ''; position: absolute; left: 0; right: 0; top: -8px; height: 8px; }
-:host([open]) .pop { display: block; }
+:host([open]) .pop { display: block; animation: pop-in 120ms ease-out; }
+@keyframes pop-in { from { opacity: 0; transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { :host([open]) .pop, .bar.loading { animation: none; } }
 :host([data-align='end']) .pop { left: auto; right: 0; }
-.row { display: flex; align-items: center; gap: 8px; padding: 2px 0; }
+.row { display: flex; align-items: center; gap: 8px; padding: 3px 6px; margin: 0 -6px; border-radius: 6px; }
+.row[data-desc]:hover { background: var(--bd); }
 .sw { width: 8px; height: 8px; border-radius: 2px; flex: none; }
 .lbl { flex: 1; }
 .info { color: var(--mut); cursor: help; margin-left: 4px; }
 .add { color: var(--add); font-variant-numeric: tabular-nums; min-width: 56px; text-align: right; }
 .del { color: var(--del); font-variant-numeric: tabular-nums; min-width: 56px; text-align: right; }
+.nums .add, .nums .del { min-width: 0; }
 .sep { border-top: 1px solid var(--bd); margin: 6px 0; }
 .total { font-weight: 600; }
 .muted { color: var(--mut); }
-.note { margin-top: 6px; max-width: 280px; white-space: normal; color: var(--mut); }
+.hint, .note { margin-top: 6px; max-width: 280px; white-space: normal; color: var(--mut); }
 button { margin-top: 6px; font: inherit; color: var(--fg); background: transparent; border: 1px solid var(--bd); border-radius: 6px; padding: 2px 8px; cursor: pointer; }

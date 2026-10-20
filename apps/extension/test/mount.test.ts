@@ -356,6 +356,18 @@ describe('startMount', () => {
     expect(sources.getSource).toHaveBeenCalledTimes(1);
   });
 
+  it('underlines the page counter and opens the popover from it, undone on stop()', () => {
+    const { mount } = start('https://github.com/o/r/pull/1');
+    const el = counter() as HTMLElement;
+
+    expect(el.style.textDecoration).toContain('dotted');
+    el.dispatchEvent(new MouseEvent('mouseenter'));
+    expect(badge()!.hasAttribute('open')).toBe(true);
+
+    mount.stop();
+    expect(el.style.textDecoration).toBe('');
+  });
+
   it('stops observing and removes the widget on stop()', () => {
     const { mount, listeners } = start('https://github.com/o/r/pull/1');
 
