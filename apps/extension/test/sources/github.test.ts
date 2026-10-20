@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createGitHubSource } from '../../src/lib/sources/github';
 import { AuthRequiredError } from '../../src/lib/sources/types';
 
@@ -129,6 +129,40 @@ describe('github source', () => {
     ]);
     releaseHead();
     expect(await pending).toHaveLength(150);
+  });
+
+  it('stops scheduling pages once aborted after the head resolves', async () => {
+    const controller = new AbortController();
+    const respond = filesResponder(3500);
+    const calls: string[] = [];
+    const fetchFn = (async (url: string, init: RequestInit) => {
+      calls.push(url);
+      if (init.signal?.aborted) throw new DOMException('aborted', 'AbortError');
+      if (!url.includes('/files')) {
+        const response = respond(url);
+        queueMicrotask(() => controller.abort());
+        return response;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      return respond(url);
+    }) as unknown as typeof fetch;
+    const unhandled = vi.fn();
+    process.on('unhandledRejection', unhandled);
+
+    await createGitHubSource(ref, { fetchFn, token: null }).fetchFiles(controller.signal).catch(() => {});
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    process.off('unhandledRejection', unhandled);
+
+    expect(calls.filter((u) => u.includes('/files')).length).toBeLessThanOrEqual(1);
+    expect(unhandled).not.toHaveBeenCalled();
+  });
+
+  it('passes the signal to every request', async () => {
+    const controller = new AbortController();
+    const { calls, fetchFn } = fakeFetch(filesResponder(250));
+    await createGitHubSource(ref, { fetchFn, token: null }).fetchFiles(controller.signal);
+    const filesCalls = calls.filter((c) => c.url.includes('/files'));
+    expect(filesCalls.every((c) => c.init.signal === controller.signal)).toBe(true);
   });
 
   it.each([

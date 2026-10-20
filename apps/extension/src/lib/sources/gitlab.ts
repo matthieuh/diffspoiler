@@ -30,13 +30,14 @@ export function createGitLabSource(
   ref: Extract<PrRef, { host: 'gitlab' }>,
   deps: { fetchFn: typeof fetch; csrfToken: string | null },
 ): StatsSource {
-  async function query<T>(gql: string): Promise<T> {
+  async function query<T>(gql: string, signal?: AbortSignal): Promise<T> {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (deps.csrfToken !== null) headers['X-CSRF-Token'] = deps.csrfToken;
 
     const response = await deps.fetchFn(GRAPHQL_URL, {
       method: 'POST',
       credentials: 'include',
+      signal,
       headers,
       body: JSON.stringify({ query: gql, variables: { path: ref.projectPath, iid: String(ref.iid) } }),
     });
@@ -62,8 +63,8 @@ export function createGitLabSource(
       const { additions, deletions, fileCount } = mr.diffStatsSummary;
       return { headSha: mr.diffHeadSha, additions, deletions, fileCount };
     },
-    async fetchFiles(): Promise<FileStat[]> {
-      const mr = await query<{ diffStats: FileStat[] }>(FILES_QUERY);
+    async fetchFiles(signal?: AbortSignal): Promise<FileStat[]> {
+      const mr = await query<{ diffStats: FileStat[] }>(FILES_QUERY, signal);
       return mr.diffStats;
     },
   };

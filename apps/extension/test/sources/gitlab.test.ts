@@ -49,6 +49,13 @@ describe('gitlab source', () => {
     expect(calls[0]!.init.headers as Record<string, string>).not.toHaveProperty('X-CSRF-Token');
   });
 
+  it('fetchFiles passes the abort signal to fetch', async () => {
+    const controller = new AbortController();
+    const { calls, fetchFn } = fakeFetch(() => json({ data: { project: { mergeRequest: { diffStats: [] } } } }));
+    await createGitLabSource(ref, { fetchFn, csrfToken: null }).fetchFiles(controller.signal);
+    expect(calls[0]!.init.signal).toBe(controller.signal);
+  });
+
   it('fetchFiles returns diffStats unchanged', async () => {
     const diffStats = [
       { path: 'a.ts', additions: 1, deletions: 2 },
