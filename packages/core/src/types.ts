@@ -5,3 +5,16 @@ export interface FileStat {
   additions: number;
   deletions: number;
 }
+
+export interface BucketSummary {
+  id: BucketId;
+  additions: number;
+  deletions: number;
+  fileCount: number;
+}
+
+export interface Breakdown {
+  buckets: BucketSummary[];
+  total: { additions: number; deletions: number; fileCount: number };
+  uncountedFiles: number;
+}
