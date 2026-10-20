@@ -1,0 +1,22 @@
+:host { display: inline-block; vertical-align: middle; position: relative; width: 56px; margin: 0 8px; height: 6px; line-height: 1; outline: none; --add: #1a7f37; --del: #cf222e; --bg: #fff; --fg: #1f2328; --mut: #656d76; --bd: #d0d7de; }
+:host([data-theme='dark']) { --add: #3fb950; --del: #f85149; --bg: #161b22; --fg: #e6edf3; --mut: #8b949e; --bd: #30363d; }
+:host([hidden]) { display: none; }
+.bar { display: flex; width: 56px; height: 6px; border-radius: 3px; overflow: hidden; background: var(--bd); gap: 1px; }
+.seg { flex-basis: 0; min-width: 2px; }
+.bar.loading { opacity: 0.5; animation: pulse 1.2s ease-in-out infinite; }
+.bar.auth { background: transparent; outline: 1px dashed var(--mut); outline-offset: -1px; }
+@keyframes pulse { 50% { opacity: 0.2; } }
+:host(:focus-visible) .bar { outline: 2px solid #4493f8; outline-offset: 2px; }
+.pop { display: none; position: absolute; top: 14px; left: 0; z-index: 2147483647; min-width: 250px; padding: 10px 12px; border: 1px solid var(--bd); border-radius: 8px; background: var(--bg); color: var(--fg); box-shadow: 0 8px 24px rgba(1, 4, 9, 0.25); font: 12px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; white-space: nowrap; }
+:host([open]) .pop { display: block; }
+.row { display: flex; align-items: center; gap: 8px; padding: 2px 0; }
+.sw { width: 8px; height: 8px; border-radius: 2px; flex: none; }
+.lbl { flex: 1; }
+.info { color: var(--mut); cursor: help; margin-left: 4px; }
+.add { color: var(--add); font-variant-numeric: tabular-nums; min-width: 56px; text-align: right; }
+.del { color: var(--del); font-variant-numeric: tabular-nums; min-width: 56px; text-align: right; }
+.sep { border-top: 1px solid var(--bd); margin: 6px 0; }
+.total { font-weight: 600; }
+.muted { color: var(--mut); }
+.note { margin-top: 6px; max-width: 280px; white-space: normal; color: var(--mut); }
+button { margin-top: 6px; font: inherit; color: var(--fg); background: transparent; border: 1px solid var(--bd); border-radius: 6px; padding: 2px 8px; cursor: pointer; }
