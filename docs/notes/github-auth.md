@@ -42,20 +42,22 @@ the server answers 406. No CSRF token or nonce needed for GETs. Not found / no a
 ## Decision
 
 `createGitHubSessionSource` (`apps/extension/src/lib/sources/github-session.ts`) reads `header` + `diffstat` +
-`tab_counts` for the head and `file_tree` for the files. `content.ts` wraps the REST source with `withAuthFallback`
-only when no token is set: REST first; on `AuthRequiredError` (private PR) it switches to the session source for both
-calls. With a token, or on public repos, behaviour is unchanged. Logged out of github.com, the session source also
-gets 404, so the widget still shows `auth-required`.
+`tab_counts` for the head and `file_tree` for the files. `content.ts` wraps the REST source with `withFallback` only
+when no token is set: REST first; on `AuthRequiredError` (private PR) or `RateLimitedError` (anonymous quota spent) it
+switches to the session source for both calls. With a token, behaviour is unchanged. Logged out of github.com, the
+session source also gets 404, so the widget still shows `auth-required`.
 
 ## Risks
 
 - Unverified on a real private PR (no session available to the spike). The endpoints are what the PR UI itself
-  calls with the session cookie, so they should behave the same; to check with the manual checklist item.
-- Internal, unversioned endpoints (`page_data/*`, a JS enum in the PR bundle). Any shape change makes the source throw
-  and the widget hide; it never reports silently wrong numbers.
-- `file_tree` stops at 3,000 files, like REST; the rest is reported as "not counted".
-- A private PR without a token still costs two REST 404s first, which count against the anonymous 60/h quota. When
-  that quota is exhausted REST throws `rate-limited`, not `AuthRequiredError`, so the fallback does not run and the
-  widget hides (kept that way on purpose: the fallback is scoped to auth failures).
-- `filesChangedCountLimitExceeded` in `tab_counts` was false even at 6,369 files; what it means beyond that is unknown
-  and it is not read.
+  calls with the session cookie, so they should behave the same; to check with manual checklist item 3b.
+- Internal, unversioned endpoints (`page_data/*`, a JS enum in the PR bundle). Drift makes the source throw and the
+  widget hide, never show wrong numbers: diffstat and file count must be integers; each `file_tree` entry must satisfy
+  `linesChanged = linesAdded + linesDeleted` (omitted = 0); a non-empty list with no count key at all is rejected; when
+  every file is listed, the file sums must equal the diffstat totals.
+- Side effect of that guard: a non-empty PR whose files all have zero line changes (pure renames, binaries only)
+  hides the widget.
+- `file_tree` stops at 3,000 files, like REST; the rest is reported as "not counted". If `tab_counts` flags its own
+  count as capped (`filesChangedCountLimitExceeded: true`, not seen even at 6,369 files) the source throws rather than
+  under-report.
+- A token-less private PR still costs two REST 404s against the anonymous 60/h quota before falling back.

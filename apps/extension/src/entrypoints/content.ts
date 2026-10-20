@@ -3,7 +3,7 @@ import { committedLocationChanges } from '../lib/location';
 import { startMount } from '../lib/mount';
 import type { PrRef } from '../lib/pr-ref';
 import { getGitHubToken } from '../lib/settings';
-import { withAuthFallback } from '../lib/sources/fallback';
+import { withFallback } from '../lib/sources/fallback';
 import { createGitHubSource } from '../lib/sources/github';
 import { createGitHubSessionSource } from '../lib/sources/github-session';
 import { createGitLabSource } from '../lib/sources/gitlab';
@@ -24,8 +24,8 @@ export default defineContentScript({
       const token = await getGitHubToken();
       const rest = createGitHubSource(ref, { fetchFn, token });
       if (token !== null) return rest;
-      // Private PR without a token: read the counts the PR page itself loads with the github.com session.
-      return withAuthFallback(rest, () => createGitHubSessionSource(ref, { fetchFn }));
+      // No token: private PRs (auth required) and a spent anonymous quota read the PR page's own data instead.
+      return withFallback(rest, () => createGitHubSessionSource(ref, { fetchFn }));
     }
 
     const mount = startMount({

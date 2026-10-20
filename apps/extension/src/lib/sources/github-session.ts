@@ -20,14 +20,19 @@ interface DiffstatResponse {
 
 interface TabCountsResponse {
   filesChangedCount?: unknown;
+  filesChangedCountLimitExceeded?: unknown;
 }
 
 interface FileTreeResponse {
   // Zero counts are omitted from each entry.
-  diffs?: { path?: unknown; linesAdded?: number; linesDeleted?: number }[];
+  diffs?: { path?: unknown; linesAdded?: unknown; linesDeleted?: unknown; linesChanged?: unknown }[];
 }
 
 const isCount = (value: unknown): value is number => Number.isInteger(value) && (value as number) >= 0;
+
+function shapeError(): Error {
+  return new Error('Unexpected GitHub page_data shape');
+}
 
 export function createGitHubSessionSource(
   ref: Extract<PrRef, { host: 'github' }>,
@@ -43,36 +48,60 @@ export function createGitHubSessionSource(
     return (await response.json()) as T;
   }
 
+  async function loadHead(): Promise<PrHead> {
+    const [header, diffstat, tabCounts] = await Promise.all([
+      get<HeaderResponse>('header'),
+      get<DiffstatResponse>('diffstat'),
+      get<TabCountsResponse>('tab_counts'),
+    ]);
+    const headSha = header.pullRequest?.headSha;
+    const additions = diffstat.diffstat?.linesAdded;
+    const deletions = diffstat.diffstat?.linesDeleted;
+    const fileCount = tabCounts.filesChangedCount;
+    if (typeof headSha !== 'string' || !isCount(additions) || !isCount(deletions) || !isCount(fileCount)) {
+      throw shapeError();
+    }
+    // A capped count would under-report the "not counted" files.
+    if (tabCounts.filesChangedCountLimitExceeded === true) throw new Error('GitHub file count is capped');
+    return { headSha, additions, deletions, fileCount };
+  }
+
+  // Shared by fetchHead and fetchFiles, which checks the file sums against the diffstat totals.
+  let head: Promise<PrHead> | null = null;
+  const fetchHeadOnce = () => {
+    head ??= loadHead();
+    return head;
+  };
+
   return {
-    async fetchHead(): Promise<PrHead> {
-      const [header, diffstat, tabCounts] = await Promise.all([
-        get<HeaderResponse>('header'),
-        get<DiffstatResponse>('diffstat'),
-        get<TabCountsResponse>('tab_counts'),
-      ]);
-      const headSha = header.pullRequest?.headSha;
-      const stat = diffstat.diffstat;
-      const additions = stat?.linesAdded ?? 0;
-      const deletions = stat?.linesDeleted ?? 0;
-      const fileCount = tabCounts.filesChangedCount;
-      if (typeof headSha !== 'string' || !stat || !isCount(additions) || !isCount(deletions) || !isCount(fileCount)) {
-        throw new Error('Unexpected GitHub page_data shape');
-      }
-      return { headSha, additions, deletions, fileCount };
-    },
+    fetchHead: fetchHeadOnce,
     async fetchFiles(signal?: AbortSignal): Promise<FileStat[]> {
       // One request; GitHub stops listing at 3,000 files, the rest shows as "not counted" via head.fileCount.
-      const { diffs } = await get<FileTreeResponse>('file_tree', signal);
+      const [pr, { diffs }] = await Promise.all([fetchHeadOnce(), get<FileTreeResponse>('file_tree', signal)]);
       signal?.throwIfAborted();
-      if (!Array.isArray(diffs)) throw new Error('Unexpected GitHub page_data shape');
-      return diffs.map((d) => {
+      if (!Array.isArray(diffs)) throw shapeError();
+
+      // Omitted keys mean zero, so a renamed key would read as zero: linesChanged and the totals catch that.
+      if (diffs.length > 0 && !diffs.some((d) => 'linesAdded' in d || 'linesDeleted' in d || 'linesChanged' in d)) {
+        throw shapeError();
+      }
+      const files = diffs.map((d) => {
         const additions = d.linesAdded ?? 0;
         const deletions = d.linesDeleted ?? 0;
-        if (typeof d.path !== 'string' || !isCount(additions) || !isCount(deletions)) {
-          throw new Error('Unexpected GitHub page_data shape');
-        }
+        const changed = d.linesChanged ?? 0;
+        const consistent = isCount(additions) && isCount(deletions) && changed === additions + deletions;
+        if (typeof d.path !== 'string' || !consistent) throw shapeError();
         return { path: d.path, additions, deletions };
       });
+
+      if (files.length === pr.fileCount) {
+        const additions = files.reduce((sum, f) => sum + f.additions, 0);
+        const deletions = files.reduce((sum, f) => sum + f.deletions, 0);
+        if (additions !== pr.additions || deletions !== pr.deletions) {
+          throw new Error('GitHub file sums differ from totals');
+        }
+      }
+      return files;
     },
   };
 }
