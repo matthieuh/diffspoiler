@@ -20,14 +20,14 @@ export async function loadBreakdown(ref: PrRef, source: StatsSource, cache: Brea
     const head = await headPromise;
     const key = prKey(ref);
 
-    const cached = await cache.get(key, head.headSha);
+    const cached = await cache.get(key, head);
     if (cached) return { breakdown: cached, head };
 
     needFiles = true;
     const files = await filesPromise;
     // GitLab's page counter is capped at 3000 files and can be lower than what we fetched.
     const breakdown = computeBreakdown(files, Math.max(0, head.fileCount - files.length));
-    await cache.set(key, head.headSha, breakdown);
+    await cache.set(key, head, breakdown);
     return { breakdown, head };
   } finally {
     // Only the cache-miss path consumes the files; every other exit drops them.
