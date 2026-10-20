@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en" class="skip-scroll-target-into-view js-skip-scroll-target-into-view" data-color-mode="auto" data-light-theme="light" data-dark-theme="dark" data-a11y-animated-images="system" data-a11y-link-underlines="true" data-turbo-loaded="" style="--observed-header-height: 60px;"><head>
+    <meta charset="utf-8">
+  
+  
+  
+  
+  
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+    
+    
+    
+    
+  
+
+
+
+
+
+  
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <title>Convert ReactFreshMultipleRenderer to createRoot by eps1lon · Pull Request #28000 · react/react · GitHub</title>
+
+
+
+  
+  
+  
+  
+
+    
+  
+
+
+  
+
+
+    
+
+
+  
+  
+
+  
+  
+
+    
+
+
+
+
+
+
+
+  
+
+  
+
+
+
+
+    
+
+  
+
+    <meta name="viewport" content="width=device-width">
+
+    
+
+      
+
+      
+
+    
+    
+    
+
+      
+  
+  
+
+
+
+
+      
+
+
+
+        
+
+
+  
+  
+  
+  
+
+  
+
+      
+  
+  
+  
+
+  
+  
+
+
+
+    
+
+    
+  
+
+
+  
+
+
+  
+
+  
+  
+
+  
+  
+  
+
+
+
+
+
+  
+
+  </head>
+
+  <body class="logged-out env-production page-responsive">
+    <div data-turbo-body="" class="logged-out env-production page-responsive" data-turbo="false">
+      <div id="__primerPortalRoot__" data-turbo-permanent=""></div>
+      
+
+    <div class="position-relative header-wrapper js-header-wrapper ">
+      <a href="" data-skip-target-assigned="false" class="px-2 tmp-py-4 color-bg-accent-emphasis color-fg-on-emphasis show-on-focus js-skip-to-content">Skip to content</a>
+
+      <span data-view-component="true" class="progress-pjax-loader Progress position-fixed width-full">
+    <span data-view-component="true" class="Progress-item progress-pjax-loader-bar left-0 top-0 color-bg-accent-emphasis"></span>
+</span>      
+      
+
+
+
+
+<react-partial partial-name="keyboard-shortcuts-dialog" data-ssr="false" data-attempted-ssr="false" data-react-profiling="false" data-catalyst="" class="loaded">
+  
+    <div data-target="react-partial.reactRoot"><div class="d-none"></div></div>
+</react-partial>
+
+
+
+
+
+      
+
+          
+
+
+
+
+<react-partial partial-name="app-install-banner-partial" data-ssr="false" data-attempted-ssr="false" data-react-profiling="false" data-catalyst="" class="loaded">
+  
+    <div data-target="react-partial.reactRoot"></div>
+</react-partial>
+
+
+          
+
+                
+
+
+
+
+
+
+
+
+
+
+
+
+<react-partial partial-name="marketing-header" data-ssr="true" data-attempted-ssr="true" data-react-profiling="false" data-catalyst="" class="loaded">
+  
+    <div data-target="react-partial.reactRoot"><div data-color-mode="dark" data-light-theme="light" data-dark-theme="dark"><header class="root__q6pgdo HeaderMktg header-logged-out" role="banner" data-marketing-header="true" data-color-mode="dark" data-light-theme="light" data-dark-theme="dark" data-is-top="true"><h2 class="visuallyHidden__TIbnmb">Navigation Menu</h2><button type="button" class="backdrop__rMNFxs" aria-label="Close navigation menu"></button><div class="bar__cF4m1O"><div class="topRow__-dqkhM"><div class="toggleSlot__-ODxSX"><button type="button" class="toggle__kPg75-" aria-label="Toggle navigation" aria-expanded="false"><span class="toggleBar__8J10Uq"></span><span class="toggleBar__8J10Uq"></span><span class="toggleBar__8J10Uq"></span></button></div><a href="/" aria-label="Homepage" class="logo__bX9RKh"><svg data-component="Octicon" aria-hidden="true" focusable="false" class="octicon octicon-mark-github" viewBox="0 0 24 24" width="32" height="32" fill="currentColor" display="inline-block" overflow="visible"></svg></a><div class="mobileActions__8F9jkX"><a class="Primer_Brand__Button-module__Button___scH9Z Primer_Brand__Button-module__Button--subtle___F7pEE Primer_Brand__Button-module__Button--size-small___zQrEw cta__xkenoh" href="/login"><span class="Primer_Brand__Button-module__Button__text___ED0bX"><span class="">Sign in</span></span></a><button class="Primer_Brand__Button-module__Button___scH9Z Primer_Brand__Button-module__Button--subtle___F7pEE Primer_Brand__Button-module__Button--size-small___zQrEw trigger__VWDtQ2" type="button" aria-haspopup="dialog" aria-labelledby="_R_3dd_"><span class="Primer_Brand__Button-module__Button__leading-visual___jjtTe" data-testid="Button-leading-visual"><svg data-component="Octicon" focusable="false" aria-hidden="true" class="octicon octicon-sliders Primer_Brand__Button-module__Button__icon-visual____qybb" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" display="inline-block" overflow="visible"></svg></span></button><div class="Primer_Brand__Tooltip-module__Tooltip___0Eipx" data-direction="s" aria-hidden="true" id="_R_3dd_" popover="auto">Appearance settings</div></div></div><div class="menu__2EHTkB"><div class="menuWrapper__Vmk5KX"><nav class="nav__mHQXuz" aria-label="Global"><ul class="list__2Gh7vS"></ul></nav><div class="ctaContainer__XiXTge"></div></div></div></div><div class="bottomBorder__38-D2c" aria-hidden="true"></div></header></div></div>
+</react-partial>
+
+
+
+      <div hidden="hidden" data-view-component="true" class="js-stale-session-flash stale-session-flash flash flash-warn flash-full">
+  
+        <svg aria-hidden="true" data-component="Octicon" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-alert"></svg>
+        <span class="js-stale-session-flash-signed-in" hidden="">You signed in with another tab or window. <a class="Link--inTextBlock" href="">Reload</a> to refresh your session.</span>
+        <span class="js-stale-session-flash-signed-out" hidden="">You signed out in another tab or window. <a class="Link--inTextBlock" href="">Reload</a> to refresh your session.</span>
+        <span class="js-stale-session-flash-switched" hidden="">You switched accounts on another tab or window. <a class="Link--inTextBlock" href="">Reload</a> to refresh your session.</span>
+
+    <button id="icon-button-ee9d12db-748c-412f-ab6f-f7181579e06c" aria-labelledby="tooltip-2fae621a-4752-4bbf-81c8-1238b0e5472f" type="button" data-view-component="true" class="Button Button--iconOnly Button--invisible Button--medium flash-close js-flash-close">  <svg aria-hidden="true" data-component="Octicon" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-x Button-visual"></svg>
+</button><tool-tip id="tooltip-2fae621a-4752-4bbf-81c8-1238b0e5472f" for="icon-button-ee9d12db-748c-412f-ab6f-f7181579e06c" popover="manual" data-direction="s" data-type="label" data-view-component="true" class="sr-only position-absolute" aria-hidden="true" role="tooltip">Dismiss alert</tool-tip>
+
+
+  
+</div>
+    </div>
+
+  <div id="start-of-content" class="show-on-focus"></div>
+
+
+
+
+
+
+
+
+    <div id="js-flash-container" class="flash-container" data-turbo-replace="">
+
+
+
+
+
+
+  
+</div>
+
+
+    
+
+
+
+
+
+
+  <div class="application-main " data-commit-hovercards-enabled="" data-discussion-hovercards-enabled="" data-issue-and-pr-hovercards-enabled="" data-project-hovercards-enabled="">
+        <div itemscope="" itemtype="http://schema.org/SoftwareSourceCode" class="">
+    <main id="js-repo-pjax-container">
+      
+  
+
+
+
+      
+    
+
+
+    
+
+
+
+
+
+
+
+
+  
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<react-partial partial-name="global-nav-bar" data-ssr="true" data-attempted-ssr="true" data-react-profiling="false" data-catalyst="" class="loaded">
+  
+    <div data-target="react-partial.reactRoot"><header aria-label="Global navigation menu" data-component="Stack" class="GlobalNav appHeader__6OmbvL prc-Stack-Stack-UQ9k6" data-direction="vertical" data-align="stretch" data-wrap="nowrap" data-justify="start" data-padding="none"><div data-component="Stack" class="prc-Stack-Stack-UQ9k6" data-direction="horizontal" data-align="center" data-wrap="nowrap" data-justify="center" data-padding="none"><div data-testid="top-nav-center" data-component="Stack" class="center__f1ujjY withLocalNavigation__FzpnU6 loggedOut__--dPuC prc-Stack-Stack-UQ9k6" data-direction="horizontal" data-align="stretch" data-wrap="nowrap" data-justify="start" data-padding="normal"><nav class="contextRegion__Wb1-GR prc-Breadcrumbs-BreadcrumbsBase-3Gb-B" aria-label="Breadcrumbs" data-overflow="menu" data-variant="normal" data-component="Breadcrumbs"><ol class="prc-Breadcrumbs-BreadcrumbsList-BKjpe"><li class="prc-Breadcrumbs-ItemWrapper-k0NLn"><a class="contextCrumb__Q8nET8 prc-Breadcrumbs-Item-jcraJ" data-component="Breadcrumbs.Item" href="/react" data-discover="true"><span class="">react</span></a></li><li class="prc-Breadcrumbs-ItemWrapper-k0NLn"><a class="contextCrumb__Q8nET8 prc-Breadcrumbs-Item-jcraJ" data-component="Breadcrumbs.Item" href="/react/react" data-discover="true"><span class="contextCrumbLast__l2P28s">react</span></a></li></ol></nav></div><div data-testid="top-nav-right" data-component="Stack" class="right__5m36ST withLocalNavigation__FzpnU6 rightWithResponsiveCreateButton__JePGAt prc-Stack-Stack-UQ9k6" data-direction="horizontal" data-align="center" data-wrap="nowrap" data-justify="start" data-padding="normal"></div></div><h2 class="prc-src-InternalVisuallyHidden-2YaI6">Repository navigation</h2><nav class="prc-components-UnderlineWrapper-eT-Yj prc-UnderlineNav-UnderlineWrapper-GWONT LocalNavigation__QHRW7C" aria-label="Repository" data-variant="inset" data-overflow-mode="wrap" data-hide-icons-breakpoint="medium"><ul class="prc-UnderlineNav-ItemsList-oj8gN prc-components-UnderlineItemList-xKlKC" role="list"></ul><div class="prc-UnderlineNav-MoreButtonContainer-Dnrq6"><div class="prc-UnderlineNav-MoreButtonDivider-dN0a-"></div><button data-component="overflow-menu-button" type="button" aria-haspopup="true" aria-expanded="false" tabindex="0" class="prc-Button-ButtonBase-9n-Xk prc-UnderlineNav-MoreButton-Y8soj" data-loading="false" data-size="medium" data-variant="invisible" id="_R_2ktp_"><span data-component="buttonContent" data-align="center" class="prc-Button-ButtonContent-Iohp5"><span data-component="text" class="prc-Button-Label-FWkx3"><span>More<span class="prc-src-InternalVisuallyHidden-2YaI6"> items</span></span></span></span><span data-component="trailingAction" class="prc-Button-Visual-YNt2F prc-Button-VisualWrap-E4cnq"><svg data-component="Octicon" aria-hidden="true" focusable="false" class="octicon octicon-triangle-down" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" display="inline-block" overflow="visible"></svg></span></button></div></nav><div class="d-none"></div></header></div>
+</react-partial>
+
+
+  
+
+
+
+<turbo-frame id="repo-content-turbo-frame" target="_top" data-turbo-action="advance" class="">
+    <div id="repo-content-pjax-container" class="repository-content ">
+    
+
+
+
+    
+      
+    <div class="clearfix tmp-mt-4 tmp-px-3 tmp-px-md-4 tmp-px-lg-5">
+        <div class="position-relative js-review-state-classes js-suggested-changes-files-tab" data-pjax="" data-discussion-hovercards-enabled="" data-issue-and-pr-hovercards-enabled="">
+      <div id="files_bucket" class="files-bucket files-next-bucket clearfix pull-request-tab-content is-visible js-multi-line-comments-enabled">
+        <diff-file-filter data-catalyst="">
+          
+
+
+              
+
+  <div id="partial-discussion-header" class="sticky-header-wrapper gh-header tmp-mb-3 js-details-container Details js-socket-channel js-updatable-content pull request js-pull-header-details" data-url="/react/react/pull/28000/partials/title" data-pull-is-open="false" data-gid="PR_kwDOAJy2Ks5kiSrJ">  <div class="non-sticky-header-container">
+    <div class="gh-header-show ">
+      <div class="d-flex flex-column flex-md-row flex-items-start flex-md-items-center">
+        <h1 class="gh-header-title mb-2 lh-condensed f1 mr-0 flex-auto wb-break-word">
+          <bdi class="js-issue-title markdown-title">Convert ReactFreshMultipleRenderer to createRoot</bdi>
+          <span class="f1-light color-fg-muted">#28000</span>
+        </h1>
+
+          <div class="gh-header-actions mt-0 tmp-mb-3 tmp-mb-md-2 ml-1 flex-md-order-1 flex-shrink-0 d-flex flex-items-center gap-2"></div>
+      </div>
+    </div>
+
+    <div class="d-flex flex-items-center flex-wrap mt-0 gh-header-meta">
+      <div class="flex-shrink-0 mb-2 flex-self-start flex-md-self-center">
+          <span reviewable_state="ready" title="Status: Merged" data-view-component="true" class="State State--merged">
+  <svg data-component="Octicon" height="16" class="octicon octicon-git-merge" viewBox="0 0 16 16" version="1.1" width="16" aria-hidden="true"></svg> Merged
+</span>
+      </div>
+
+
+
+
+      <div class="flex-auto min-width-0 mb-2">
+            <a class="author Link--secondary text-bold" data-hovercard-type="user" href="/eps1lon" aria-keyshortcuts="Alt+ArrowUp">eps1lon</a>
+  merged 1 commit into
+
+
+  <span title="react/react:main" class="commit-ref css-truncate user-select-contain expandable "><a title="react/react:main" class="no-underline " href="/react/react/tree/main"><span class="css-truncate-target">react</span>:<span class="css-truncate-target">main</span></a></span><span></span>
+
+from
+
+<span title="eps1lon/react:test/create-root/ReactFreshMultipleRenderer" class="commit-ref css-truncate user-select-contain expandable head-ref"><a title="eps1lon/react:test/create-root/ReactFreshMultipleRenderer" class="no-underline " href="/eps1lon/react/tree/test/create-root/ReactFreshMultipleRenderer"><span class="css-truncate-target">eps1lon</span>:<span class="css-truncate-target">test/create-root/ReactFreshMultipleRenderer</span></a></span><span><span data-view-component="true">
+  <clipboard-copy aria-label="Copy" data-copy-feedback="Copied!" value="eps1lon:test/create-root/ReactFreshMultipleRenderer" data-view-component="true" class="Link--onHover js-copy-branch color-fg-muted d-inline-block ml-1 tmp-ml-1" tabindex="0" role="button">
+      <svg aria-hidden="true" data-component="Octicon" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy"></svg>
+      <svg aria-hidden="true" data-component="Octicon" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check color-fg-success"></svg>
+</clipboard-copy>  <div aria-live="polite" aria-atomic="true" class="sr-only" data-clipboard-copy-feedback=""></div>
+</span></span>
+
+
+  <relative-time datetime="2024-01-19T17:21:15Z" class="no-wrap" title="Jan 19, 2024, 6:21 PM GMT+1">Jan 19, 2024</relative-time>
+
+
+      </div>
+    </div>
+  </div>
+
+
+
+<div class="pr-alerts-banner">
+
+      
+
+
+</div>
+</div>
+
+
+                
+<div class="tmp-px-3 tmp-px-md-0 tmp-ml-n3 tmp-mr-n3 mx-md-0 tabnav">
+    <div class="tabnav-extra float-right d-none d-md-block">
+      <span class="diffstat" id="diffstat">
+        <span class="color-fg-success">
+          +7
+        </span>
+        <span class="color-fg-danger">
+          −3
+        </span>
+        <span>
+          <span class="diffstat-block-added"></span><span class="diffstat-block-added"></span><span class="diffstat-block-added"></span><span class="diffstat-block-deleted"></span><span class="diffstat-block-neutral"></span>
+        </span>
+      </span>
+    </div>
+
+  <nav class="tabnav-tabs d-flex overflow-auto" data-pjax="#repo-content-pjax-container" data-turbo-frame="repo-content-turbo-frame" aria-label="Pull request tabs">
+    <a href="/react/react/pull/28000" class="tabnav-tab flex-shrink-0 " data-turbo-frame="repo-content-turbo-frame">
+      <svg aria-hidden="true" data-component="Octicon" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-comment-discussion d-none d-md-inline-block"></svg>
+      Conversation
+
+      <span id="conversation_tab_counter" title="7" data-view-component="true" class="Counter">7</span>
+    </a>
+
+    <a href="/react/react/pull/28000/commits" class="tabnav-tab flex-shrink-0 " data-turbo-frame="repo-content-turbo-frame">
+      <svg aria-hidden="true" data-component="Octicon" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-git-commit d-none d-md-inline-block"></svg>
+      Commits
+
+      <span id="commits_tab_counter" title="1" data-view-component="true" class="Counter js-updateable-pull-request-commits-count">1</span>
+    </a>
+
+    <a href="/react/react/pull/28000/checks" class="tabnav-tab flex-shrink-0 " data-turbo-frame="repo-content-turbo-frame">
+  <svg aria-hidden="true" data-component="Octicon" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-checklist d-none d-md-inline-block"></svg>
+  Checks
+
+  <span id="checks_tab_counter" title="0" data-view-component="true" class="Counter">0</span>
+</a>
+
+
+
+
+    <a href="/react/react/pull/28000/files" class="tabnav-tab flex-shrink-0 selected" aria-current="page" data-turbo-frame="repo-content-turbo-frame">
+      <svg aria-hidden="true" data-component="Octicon" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-file-diff d-none d-md-inline-block"></svg>
+      Files changed
+
+          <span id="files_tab_counter" title="1" data-view-component="true" class="Counter">1</span>
+    </a>
+  </nav>
+</div>
+
+
+
+            <diff-layout sidebar-hidden="" data-catalyst="">
+                <button data-hotkey="t" data-action="click:diff-layout#handleOpenFilesListHotkeyEvent" hidden="hidden" type="button" data-view-component="true" class="btn">
+</button>
+                <div class="pr-toolbar d-flex js-toggle-stuck js-observe-sticky-header-height" data-target="diff-layout.diffToolbar">
+                  <div class="diffbar details-collapse js-details-container Details flex-1 d-flex flex-items-center width-full flex-wrap gap-2">
+                    <div class="show-if-stuck mr-2 hide-md hide-sm">
+                      <div id="pull-state" class="js-socket-channel js-updatable-content" data-url="/react/react/pull/28000/partials/state" data-gid="PR_kwDOAJy2Ks5kiSrJ">
+  <span reviewable_state="ready" title="Status: Merged" data-view-component="true" class="State State--merged">
+  <svg data-component="Octicon" height="16" class="octicon octicon-git-merge" viewBox="0 0 16 16" version="1.1" width="16" aria-hidden="true"></svg> Merged
+</span>
+</div>
+
+                    </div>
+
+                    <div class="flex-auto min-width-0">
+                      <div class="show-if-stuck hide-md hide-sm">
+                        <h1 class="d-flex text-bold f5">
+  <a class="js-issue-title css-truncate css-truncate-target Link--primary width-fit markdown-title js-smoothscroll-anchor" href="">
+    Convert ReactFreshMultipleRenderer to createRoot
+  </a>
+  <span class="gh-header-number color-fg-muted pl-1">#28000</span>
+</h1>
+
+                      </div>
+                      <div class="d-flex flex-items-center flex-wrap" data-pjax="#repo-content-pjax-container" data-turbo-frame="repo-content-turbo-frame"></div>
+                    </div>
+
+                    <div class="flex-grow-0 flex-shrink-0 pr-review-tools">
+
+                    </div>
+                  </div>
+                </div>
+                
+
+
+    
+
+
+<div id="files" class="diff-view  js-diff-container"></div>
+
+<button type="button" class="js-toggle-all-file-notes" data-hotkey="i">Toggle all file notes</button>
+
+<button type="button" class="js-toggle-all-file-annotations" data-hotkey="a">Toggle all file annotations</button>
+
+<svg aria-hidden="true" width="100px" height="84px" viewBox="0 0 340 84" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="diff-placeholder-svg position-absolute bottom-0"></svg>
+
+
+
+
+            </diff-layout>
+        </diff-file-filter>
+      </div>
+    </div>
+    <div hidden="">
+  <span class="js-add-to-batch-enabled">Add this suggestion to a batch that can be applied as a single commit.</span>
+  <span class="js-unchanged-suggestion">This suggestion is invalid because no changes were made to the code.</span>
+  <span class="js-closed-pull">Suggestions cannot be applied while the pull request is closed.</span>
+  <span class="js-viewing-subset-changes">Suggestions cannot be applied while viewing a subset of changes.</span>
+  <span class="js-one-suggestion-per-line">Only one suggestion per line can be applied in a batch.</span>
+  <span class="js-reenable-add-to-batch">Add this suggestion to a batch that can be applied as a single commit.</span>
+  <span class="js-validation-on-left-blob">Applying suggestions on deleted lines is not supported.</span>
+  <span class="js-validation-on-right-blob">You must change the existing code in this line in order to create a valid suggestion.</span>
+  <span class="js-outdated-comment">Outdated suggestions cannot be applied.</span>
+  <span class="js-resolved-thread">This suggestion has been applied or marked resolved.</span>
+  <span class="js-pending-review">Suggestions cannot be applied from pending reviews.</span>
+  <span class="js-is-multiline">Suggestions cannot be applied on multi-line comments.</span>
+  <span class="js-in-merge-queue">Suggestions cannot be applied while the pull request is queued to merge.</span>
+  <span class="js-head-oid-not-loaded">Suggestion cannot be applied right now. Please check back later.</span>
+  <div class="form-group errored m-0 error js-suggested-changes-inline-validation-template d-flex">
+    <span class="js-suggested-changes-inline-error-message position-relative error m-0"></span>
+  </div>
+</div>
+
+
+    </div>
+
+
+  </div>
+
+</turbo-frame>
+
+
+    </main>
+  </div>
+
+  </div>
+
+          <footer class="footer f6 color-fg-muted color-border-subtle tmp-pt-7 tmp-pb-6 p-responsive" role="contentinfo">
+  <h2 class="sr-only">Footer</h2>
+
+  
+
+
+  <div class="d-flex flex-justify-center flex-items-center flex-column-reverse flex-lg-row flex-wrap flex-lg-nowrap">
+    <div class="d-flex flex-items-center flex-shrink-0 mx-2">
+      <a aria-label="GitHub Homepage" class="footer-octicon mr-2" href="https://github.com">
+        <svg aria-hidden="true" data-component="Octicon" height="24" viewBox="0 0 24 24" version="1.1" width="24" data-view-component="true" class="octicon octicon-mark-github"></svg>
+</a>
+      <span>
+        © 2026 GitHub,&nbsp;Inc.
+      </span>
+    </div>
+
+    <nav aria-label="Footer">
+      <h3 class="sr-only" id="sr-footer-heading">Footer navigation</h3>
+
+      <ul class="list-style-none d-flex flex-justify-center flex-wrap mb-2 mb-lg-0" aria-labelledby="sr-footer-heading"></ul>
+    </nav>
+  </div>
+</footer>
+
+
+
+    <ghcc-consent id="ghcc" class="position-fixed bottom-0 left-0" data-locale="en" data-initial-cookie-consent-allowed="" data-cookie-consent-required="true" data-catalyst=""></ghcc-consent>
+
+
+
+
+  <div id="ajax-error-message" class="ajax-error-message flash flash-error" hidden="">
+    <svg aria-hidden="true" data-component="Octicon" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-alert"></svg>
+    <button type="button" class="flash-close js-ajax-error-dismiss" aria-label="Dismiss error">
+      <svg aria-hidden="true" data-component="Octicon" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-x"></svg>
+    </button>
+    You can’t perform that action at this time.
+  </div>
+
+    
+
+    <div class="Popover js-hovercard-content position-absolute">
+  <div class="Popover-message Popover-message--bottom-left Popover-message--large Box color-shadow-large"></div>
+</div>
+
+    
+
+
+
+
+
+    </div>
+    <div id="js-global-screen-reader-notice" class="sr-only mt-n1" aria-live="polite" aria-atomic="true"></div>
+    <div id="js-global-screen-reader-notice-assertive" class="sr-only mt-n1" aria-live="assertive" aria-atomic="true"></div>
+  
+
+
+</body></html>
