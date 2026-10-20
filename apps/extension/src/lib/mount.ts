@@ -13,9 +13,17 @@ export interface MountDeps {
   cache: BreakdownCache;
   /** Fires with the new URL once a navigation has committed. */
   onLocationChange: (cb: (url: string) => void) => () => void;
+  /** Whether the user saved a GitHub token; only used to word the auth-required state. */
+  hasGitHubToken?: () => Promise<boolean>;
+  /** False once the extension was reloaded/updated under this page; the mount then stops itself. */
+  isContextValid?: () => boolean;
 }
 
-type View = { kind: 'loading' } | { kind: 'auth-required' } | { kind: 'hidden' } | { kind: 'ready'; loaded: Loaded };
+type View =
+  | { kind: 'loading' }
+  | { kind: 'auth-required'; host: PrRef['host']; hasToken?: boolean }
+  | { kind: 'hidden' }
+  | { kind: 'ready'; loaded: Loaded };
 
 // The host page must never break because of us.
 function guard(fn: () => void): void {
@@ -37,6 +45,7 @@ export function startMount(deps: MountDeps): { stop(): void } {
   let counterText: string | null = null;
   let observer: MutationObserver | null = null;
   let frame = 0;
+  let unsubscribe: (() => void) | null = null;
 
   function paint(): void {
     if (!widget) return;
@@ -87,18 +96,29 @@ export function startMount(deps: MountDeps): { stop(): void } {
     return (ref ? prKey(ref) : null) !== (current?.key ?? null);
   }
 
+  function stop(): void {
+    unsubscribe?.();
+    unsubscribe = null;
+    current = null;
+    teardown();
+  }
+
+  const contextValid = () => deps.isContextValid?.() ?? true;
+
   function schedulePlace(): void {
     if (frame) return;
     frame = win.requestAnimationFrame(() => {
       frame = 0;
+      if (!contextValid()) return stop();
       guard(() => (locationMoved() ? route(win.location.href) : place()));
     });
   }
 
   function observe(): void {
-    if (observer || !doc.body) return;
+    if (observer) return;
     observer = new MutationObserver(schedulePlace);
-    observer.observe(doc.body, { childList: true, subtree: true });
+    // The root, not the body: the host page can replace the whole body.
+    observer.observe(doc.documentElement, { childList: true, subtree: true });
   }
 
   function teardown(): void {
@@ -111,9 +131,16 @@ export function startMount(deps: MountDeps): { stop(): void } {
     counterText = null;
   }
 
+  async function authRequiredView(ref: PrRef): Promise<View> {
+    if (ref.host === 'gitlab') return { kind: 'auth-required', host: 'gitlab' };
+    const hasToken = await deps.hasGitHubToken?.().catch(() => false);
+    return { kind: 'auth-required', host: 'github', hasToken: hasToken ?? false };
+  }
+
   // Never rejects: it is fired and forgotten.
   async function load(ref: PrRef, key: string): Promise<void> {
     try {
+      if (!contextValid()) return stop();
       let pending = inflight.get(key);
       if (!pending) {
         pending = (async () => loadBreakdown(ref, await getSource(ref), cache))();
@@ -125,7 +152,7 @@ export function startMount(deps: MountDeps): { stop(): void } {
         results.set(key, loaded);
         next = { kind: 'ready', loaded };
       } catch (error) {
-        next = error instanceof AuthRequiredError ? { kind: 'auth-required' } : { kind: 'hidden' };
+        next = error instanceof AuthRequiredError ? await authRequiredView(ref) : { kind: 'hidden' };
       } finally {
         inflight.delete(key);
       }
@@ -154,14 +181,8 @@ export function startMount(deps: MountDeps): { stop(): void } {
     place();
   }
 
-  const unsubscribe = deps.onLocationChange((url) => guard(() => route(url)));
+  unsubscribe = deps.onLocationChange((url) => guard(() => route(url)));
   guard(() => route(win.location.href));
 
-  return {
-    stop() {
-      unsubscribe();
-      current = null;
-      teardown();
-    },
-  };
+  return { stop };
 }

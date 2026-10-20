@@ -7,7 +7,7 @@ import css from './widget.css?inline';
 export type WidgetState =
   | { kind: 'loading' }
   | { kind: 'ready'; breakdown: Breakdown; page: PageCounter | null }
-  | { kind: 'auth-required' }
+  | { kind: 'auth-required'; host: 'github' | 'gitlab'; hasToken?: boolean }
   | { kind: 'hidden' };
 
 // Mirrors .pop min-width; fallback when the popover has no layout box (non-rendering environments).
@@ -124,13 +124,26 @@ export function createWidget(doc: Document): { host: HTMLElement; setState(s: Wi
       pop.append(el(doc, 'div', 'muted', 'Counting changed lines…'));
     } else if (s.kind === 'auth-required') {
       bar.classList.add('auth');
-      pop.append(el(doc, 'div', '', 'Private repo: add a GitHub token in diffspoiler options.'));
-      const btn = el(doc, 'button', '', 'Open options');
-      btn.type = 'button';
-      btn.addEventListener('click', () => {
-        browser.runtime.sendMessage({ type: 'open-options' }).catch(() => {});
-      });
-      pop.append(btn);
+      if (s.host === 'gitlab') {
+        pop.append(
+          el(doc, 'div', '', "Couldn't read this merge request with your GitLab session. Try reloading the page."),
+        );
+      } else {
+        const message = s.hasToken
+          ? "Your GitHub token can't read this repo."
+          : 'Private repo: add a GitHub token in diffspoiler options.';
+        pop.append(el(doc, 'div', '', message));
+        const btn = el(doc, 'button', '', 'Open options');
+        btn.type = 'button';
+        btn.addEventListener('click', () => {
+          try {
+            browser.runtime.sendMessage({ type: 'open-options' }).catch(() => {});
+          } catch {
+            // The extension was reloaded under this page; there is nothing left to message.
+          }
+        });
+        pop.append(btn);
+      }
     } else if (s.kind === 'ready') {
       renderReady(doc, bar, pop, s.breakdown, s.page);
     }

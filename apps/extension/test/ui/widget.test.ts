@@ -54,7 +54,7 @@ describe('widget', () => {
     widths.push(host.style.width);
     setState({ kind: 'ready', breakdown, page: null });
     widths.push(host.style.width);
-    setState({ kind: 'auth-required' });
+    setState({ kind: 'auth-required', host: 'github' });
     widths.push(host.style.width);
     expect(new Set(widths)).toEqual(new Set(['56px']));
   });
@@ -95,7 +95,7 @@ describe('widget', () => {
   it('shows the footnote when the page counter differs', () => {
     const { setState, text } = make();
     setState({ kind: 'ready', breakdown, page: { additions: 3000, deletions: 49876, capped: false } });
-    expect(text()).toContain('The page shows +3,000 −49,876; diffspoiler counted +1,505 −35 across all files.');
+    expect(text()).toContain('The page shows +3,000 −49,876; diffspoiler counted +1,505 −35 across 7 counted files.');
   });
 
   it('puts the description and file count in each info title', () => {
@@ -109,14 +109,40 @@ describe('widget', () => {
     expect(titles[0]).toMatch(/ 4 files\.$/);
   });
 
-  it('auth-required shows a dashed bar, the message and an options button', async () => {
+  it('auth-required (GitHub, no token) shows a dashed bar, the message and an options button', async () => {
     const { setState, root, text } = make();
     const spy = vi.spyOn(browser.runtime, 'sendMessage').mockResolvedValue(undefined);
-    setState({ kind: 'auth-required' });
+    setState({ kind: 'auth-required', host: 'github' });
     expect(root.querySelector('.bar')!.classList.contains('auth')).toBe(true);
     expect(text()).toContain('Private repo: add a GitHub token in diffspoiler options.');
     root.querySelector('button')!.click();
     expect(spy).toHaveBeenCalledWith({ type: 'open-options' });
+  });
+
+  it('auth-required (GitHub, with a token) says the token cannot read the repo and offers options', () => {
+    const { setState, root, text } = make();
+    setState({ kind: 'auth-required', host: 'github', hasToken: true });
+    expect(text()).toContain("Your GitHub token can't read this repo.");
+    expect(text()).not.toContain('Private repo');
+    expect(root.querySelector('button')).not.toBeNull();
+  });
+
+  it('auth-required (GitLab) suggests reloading and has no options button', () => {
+    const { setState, root, text } = make();
+    setState({ kind: 'auth-required', host: 'gitlab' });
+    expect(root.querySelector('.bar')!.classList.contains('auth')).toBe(true);
+    expect(text()).toContain("Couldn't read this merge request with your GitLab session. Try reloading the page.");
+    expect(text()).not.toContain('GitHub');
+    expect(root.querySelector('button')).toBeNull();
+  });
+
+  it('does not throw when sendMessage throws synchronously', () => {
+    const { setState, root } = make();
+    vi.spyOn(browser.runtime, 'sendMessage').mockImplementation(() => {
+      throw new Error('Extension context invalidated.');
+    });
+    setState({ kind: 'auth-required', host: 'github' });
+    expect(() => root.querySelector('button')!.click()).not.toThrow();
   });
 
   it('hides with display none', () => {
@@ -162,7 +188,7 @@ describe('widget', () => {
 
   it('keeps the popover open when focus moves inside it, closes when it leaves', () => {
     const { host, setState, root } = make();
-    setState({ kind: 'auth-required' });
+    setState({ kind: 'auth-required', host: 'github' });
     const button = root.querySelector('button')!;
     host.dispatchEvent(new Event('focusin'));
     host.dispatchEvent(new FocusEvent('focusout', { relatedTarget: button }));
@@ -178,7 +204,7 @@ describe('widget', () => {
     const unhandled = vi.fn();
     process.on('unhandledRejection', unhandled);
     vi.spyOn(browser.runtime, 'sendMessage').mockRejectedValue(new Error('Extension context invalidated.'));
-    setState({ kind: 'auth-required' });
+    setState({ kind: 'auth-required', host: 'github' });
     root.querySelector('button')!.click();
     await new Promise((r) => setTimeout(r, 10));
     process.off('unhandledRejection', unhandled);
