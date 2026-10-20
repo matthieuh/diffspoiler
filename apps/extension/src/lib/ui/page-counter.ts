@@ -26,8 +26,9 @@ export function footnote(b: Breakdown, page: PageCounter | null): string | null 
   if (page.capped) return 'The page shows a capped count; diffspoiler counted every changed file.';
   if (page.additions === null || page.deletions === null) return null;
   if (page.additions === b.total.additions && page.deletions === b.total.deletions) return null;
+  const scope = b.uncountedFiles > 0 ? `${fmt(b.total.fileCount)} counted files` : 'all files';
   return (
     `The page shows +${fmt(page.additions)} −${fmt(page.deletions)}; ` +
-    `diffspoiler counted +${fmt(b.total.additions)} −${fmt(b.total.deletions)} across all files.`
+    `diffspoiler counted +${fmt(b.total.additions)} −${fmt(b.total.deletions)} across ${scope}.`
   );
 }
