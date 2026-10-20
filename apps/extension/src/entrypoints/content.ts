@@ -1,4 +1,5 @@
 import { createBreakdownCache } from '../lib/cache';
+import { committedLocationChanges } from '../lib/location';
 import { startMount } from '../lib/mount';
 import type { PrRef } from '../lib/pr-ref';
 import { getGitHubToken } from '../lib/settings';
@@ -26,17 +27,9 @@ export default defineContentScript({
       doc: document,
       getSource,
       cache: createBreakdownCache(),
-      onLocationChange(cb) {
-        // ctx listeners only go away when the context is invalidated, so gate the callback instead.
-        let active = true;
-        // Chromium dispatches this from the Navigation API's navigate event, before location.href changes.
-        ctx.addEventListener(window, 'wxt:locationchange', (event) => {
-          if (active) cb(event.newUrl.href);
-        });
-        return () => {
-          active = false;
-        };
-      },
+      onLocationChange: committedLocationChanges(window, (listener) =>
+        ctx.addEventListener(window, 'wxt:locationchange', listener),
+      ),
     });
     ctx.onInvalidated(() => mount.stop());
   },
