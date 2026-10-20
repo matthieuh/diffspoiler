@@ -18,3 +18,10 @@ export class AuthRequiredError extends Error {
     this.name = 'AuthRequiredError';
   }
 }
+
+export class RateLimitedError extends Error {
+  constructor() {
+    super('rate-limited');
+    this.name = 'RateLimitedError';
+  }
+}

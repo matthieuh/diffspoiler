@@ -1,6 +1,6 @@
 import type { FileStat } from '@diffspoiler/core/types';
 import type { PrRef } from '../pr-ref';
-import { AuthRequiredError, type PrHead, type StatsSource } from './types';
+import { AuthRequiredError, type PrHead, RateLimitedError, type StatsSource } from './types';
 
 const API = 'https://api.github.com';
 const PER_PAGE = 100;
@@ -36,7 +36,7 @@ export function createGitHubSource(
     // GitHub answers 404 for private repos the token (or lack of one) cannot see.
     if (response.status === 401 || response.status === 404) throw new AuthRequiredError();
     if (response.status === 403 && response.headers.get('x-ratelimit-remaining') === '0') {
-      throw new Error('rate-limited');
+      throw new RateLimitedError();
     }
     if (!response.ok) throw new Error(`GitHub request failed: ${response.status}`);
     return (await response.json()) as T;

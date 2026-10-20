@@ -1,7 +1,8 @@
-import { AuthRequiredError, type StatsSource } from './types';
+import { AuthRequiredError, RateLimitedError, type StatsSource } from './types';
 
-// Switches to the fallback for good once the primary asks for auth, so head and files come from the same source.
-export function withAuthFallback(primary: StatsSource, createFallback: () => StatsSource): StatsSource {
+// Switches to the fallback for good once the primary needs auth or is rate-limited, so head and files come from the
+// same source.
+export function withFallback(primary: StatsSource, createFallback: () => StatsSource): StatsSource {
   let fallback: StatsSource | null = null;
 
   async function run<T>(call: (source: StatsSource) => Promise<T>): Promise<T> {
@@ -9,7 +10,7 @@ export function withAuthFallback(primary: StatsSource, createFallback: () => Sta
     try {
       return await call(primary);
     } catch (error) {
-      if (!(error instanceof AuthRequiredError)) throw error;
+      if (!(error instanceof AuthRequiredError || error instanceof RateLimitedError)) throw error;
       fallback ??= createFallback();
       return call(fallback);
     }

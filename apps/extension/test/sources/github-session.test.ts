@@ -63,12 +63,22 @@ describe('github session source', () => {
       { path: 'types/chrome/index.d.ts', additions: 12, deletions: 0 },
       { path: 'types/chrome/package.json', additions: 1, deletions: 1 },
     ]);
-    expect(calls.map((c) => c.url)).toEqual([`${base}/file_tree`]);
+    expect(calls.map((c) => c.url)).toContain(`${base}/file_tree`);
+  });
+
+  it('a fetchHead + fetchFiles pair requests each endpoint once', async () => {
+    const { calls, fetchFn } = fakeFetch(fixtures);
+    const source = createGitHubSessionSource(ref, { fetchFn });
+    await Promise.all([source.fetchHead(), source.fetchFiles()]);
+
+    expect(calls.map((c) => c.url).sort()).toEqual(
+      ['diffstat', 'file_tree', 'header', 'tab_counts'].map((name) => `${base}/${name}`),
+    );
   });
 
   it('returns what file_tree lists, leaving the uncounted rest to head.fileCount', async () => {
     // file_tree stops at 3,000 entries (observed on a 6,369-file PR); tab_counts still reports the real count.
-    const diffs = Array.from({ length: 3000 }, (_, i) => ({ path: `f${i}.ts`, linesAdded: 1 }));
+    const diffs = Array.from({ length: 3000 }, (_, i) => ({ path: `f${i}.ts`, linesAdded: 1, linesChanged: 1 }));
     const { fetchFn } = fakeFetch((name) =>
       name === 'file_tree'
         ? json({ diffs })
@@ -87,7 +97,7 @@ describe('github session source', () => {
     const controller = new AbortController();
     const { calls, fetchFn } = fakeFetch(fixtures);
     await createGitHubSessionSource(ref, { fetchFn }).fetchFiles(controller.signal);
-    expect(calls[0]!.init.signal).toBe(controller.signal);
+    expect(calls.find((c) => c.url.endsWith('/file_tree'))!.init.signal).toBe(controller.signal);
   });
 
   it('rejects an aborted fetchFiles even if the response still arrives', async () => {
@@ -129,5 +139,48 @@ describe('github session source', () => {
 
     const { fetchFn: filesFetch } = fakeFetch(() => json({ files: [] }));
     await expect(createGitHubSessionSource(ref, { fetchFn: filesFetch }).fetchFiles()).rejects.toThrow();
+  });
+
+  const withFileTree = (diffs: unknown[]) => (name: string) =>
+    name === 'file_tree' ? json({ diffs }) : fixtures(name);
+
+  it('rejects file_tree entries whose count keys were renamed', async () => {
+    const { fetchFn } = fakeFetch(
+      withFileTree([
+        { path: 'a.ts', added: 20, deleted: 1, changed: 21 },
+        { path: 'b.ts', added: 2, deleted: 0, changed: 2 },
+      ]),
+    );
+    await expect(createGitHubSessionSource(ref, { fetchFn }).fetchFiles()).rejects.toThrow();
+  });
+
+  it('rejects an entry whose linesChanged is not linesAdded + linesDeleted', async () => {
+    const { fetchFn } = fakeFetch(withFileTree([{ path: 'a.ts', linesChanged: 23 }]));
+    await expect(createGitHubSessionSource(ref, { fetchFn }).fetchFiles()).rejects.toThrow();
+  });
+
+  it('rejects when the file sums of a complete list differ from the diffstat totals', async () => {
+    const { fetchFn } = fakeFetch(
+      withFileTree([
+        { path: 'a.ts', linesAdded: 21, linesChanged: 21 },
+        { path: 'b.ts', linesDeleted: 1, linesChanged: 1 },
+        { path: 'c.ts', linesAdded: 2, linesChanged: 2 },
+      ]),
+    );
+    await expect(createGitHubSessionSource(ref, { fetchFn }).fetchFiles()).rejects.toThrow();
+  });
+
+  it('rejects a head whose diffstat lacks a count', async () => {
+    const { fetchFn } = fakeFetch((name) =>
+      name === 'diffstat' ? json({ diffstat: { linesAdded: 22 } }) : fixtures(name),
+    );
+    await expect(createGitHubSessionSource(ref, { fetchFn }).fetchHead()).rejects.toThrow();
+  });
+
+  it('rejects a head whose file count is itself capped', async () => {
+    const { fetchFn } = fakeFetch((name) =>
+      name === 'tab_counts' ? json({ filesChangedCount: 3000, filesChangedCountLimitExceeded: true }) : fixtures(name),
+    );
+    await expect(createGitHubSessionSource(ref, { fetchFn }).fetchHead()).rejects.toThrow();
   });
 });

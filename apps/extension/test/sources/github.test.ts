@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createGitHubSource } from '../../src/lib/sources/github';
-import { AuthRequiredError } from '../../src/lib/sources/types';
+import { AuthRequiredError, RateLimitedError } from '../../src/lib/sources/types';
 
 const ref = { host: 'github', repo: 'o/r', number: 12 } as const;
 
@@ -183,6 +183,7 @@ describe('github source', () => {
     const { fetchFn } = fakeFetch(() => json({}, 403, { 'x-ratelimit-remaining': '0' }));
     const err = await createGitHubSource(ref, { fetchFn, token: null }).fetchHead().catch((e) => e);
     expect(err).not.toBeInstanceOf(AuthRequiredError);
+    expect(err).toBeInstanceOf(RateLimitedError);
     expect(err.message).toBe('rate-limited');
   });
 
