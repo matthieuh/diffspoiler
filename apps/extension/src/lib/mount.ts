@@ -11,7 +11,7 @@ export interface MountDeps {
   doc: Document;
   getSource: (ref: PrRef) => Promise<StatsSource>;
   cache: BreakdownCache;
-  /** Fires with the destination URL, possibly before `location.href` has changed. */
+  /** Fires with the new URL once a navigation has committed. */
   onLocationChange: (cb: (url: string) => void) => () => void;
 }
 

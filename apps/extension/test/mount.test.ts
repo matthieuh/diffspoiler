@@ -86,7 +86,7 @@ function setup(url: string, body = githubHeader, getSource?: MountDeps['getSourc
       return () => listeners.delete(cb);
     },
   });
-  // Mirrors Chromium: the location event fires inside the navigate event, before location.href changes.
+  // Fires before updating location.href so tests prove the controller routes on the URL it is given.
   const navigate = (next: string) => {
     for (const cb of listeners) cb(next);
     setUrl(next);
@@ -234,7 +234,7 @@ describe('startMount', () => {
     await vi.waitFor(() => expect(badgeText()).toContain('+111'));
   });
 
-  it("never shows PR A's breakdown on PR B when the URL commits after the location event", async () => {
+  it("routes on the URL it is given and never shows PR A's breakdown on PR B", async () => {
     const { sources, navigate } = start('https://github.com/o/r/pull/1');
     await vi.waitFor(() => expect(sources.requested('github:o/r#1')).toBe(true));
     sources.resolve('github:o/r#1');
@@ -269,6 +269,26 @@ describe('startMount', () => {
 
     await vi.waitFor(() => expect(badge()!.style.display).toBe('none'));
     expect(getSource).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the widget through a navigation attempt that never commits (download, stop)', async () => {
+    const { sources } = start('https://github.com/o/r/pull/1');
+    await vi.waitFor(() => expect(sources.requested('github:o/r#1')).toBe(true));
+    sources.resolve('github:o/r#1');
+    await vi.waitFor(() => expect(badgeText()).toContain('+111'));
+
+    // No location event and no URL change, only page mutations.
+    const link = document.createElement('a');
+    link.href = '/o/r/pull/1.patch';
+    link.download = '';
+    document.body.append(link);
+    document.body.append(document.createElement('p'));
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(badge()).not.toBeNull();
+    expect(badgeText()).toContain('+111');
+    expect(observers[0]!.disconnect).not.toHaveBeenCalled();
+    expect(sources.getSource).toHaveBeenCalledTimes(1);
   });
 
   it('stops observing and removes the widget on stop()', () => {
