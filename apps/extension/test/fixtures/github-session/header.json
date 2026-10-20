@@ -1,0 +1,11 @@
+{
+  "pullRequest": {
+    "number": 75475,
+    "state": "MERGED",
+    "title": "chrome: Add global `browser` alias",
+    "baseBranch": "master",
+    "headBranch": "add-browser-alias-chrome",
+    "headSha": "2e717a6870fc46768a5c4590e97ab206407b7bcd",
+    "commitsCount": 1
+  }
+}

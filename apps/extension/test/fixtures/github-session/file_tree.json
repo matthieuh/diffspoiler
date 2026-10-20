@@ -1,0 +1,42 @@
+{
+  "baseRefOid": "9daa288b64d038698d39e8ae58f78a23bd3aacc3",
+  "commits": [
+    {
+      "actorLogin": "dgp1130",
+      "createdAt": "2026-09-08T17:25:48-07:00",
+      "messageHeadline": "chrome: Add global `browser` alias",
+      "oid": "2e717a6870fc46768a5c4590e97ab206407b7bcd",
+      "shortOid": "2e717a6"
+    }
+  ],
+  "diffs": [
+    {
+      "changeType": "CHANGE_TYPE_MODIFIED",
+      "linesAdded": 9,
+      "linesChanged": 9,
+      "path": "types/chrome/test/index.ts",
+      "pathDigest": "1ac7b611fa281ad873e71ccb732137409dbeb934e1507a564cf1f108831540b4"
+    },
+    {
+      "changeType": "CHANGE_TYPE_MODIFIED",
+      "isVendored": true,
+      "linesAdded": 12,
+      "linesChanged": 12,
+      "path": "types/chrome/index.d.ts",
+      "pathDigest": "bca1485de0d42c108ae0cd3f9dec33d2ea345d41e231906130fa126504023c8f"
+    },
+    {
+      "changeType": "CHANGE_TYPE_MODIFIED",
+      "isManifestFile": true,
+      "linesAdded": 1,
+      "linesChanged": 2,
+      "linesDeleted": 1,
+      "path": "types/chrome/package.json",
+      "pathDigest": "749844249b11fa4b311c7f641dbaa831ea346b15e1d9059eca29da7bae942ef7"
+    }
+  ],
+  "ownerLogin": "DefinitelyTyped",
+  "pathName": "/DefinitelyTyped/DefinitelyTyped/pull/75475",
+  "pullRequestNumber": 75475,
+  "repositoryName": "DefinitelyTyped"
+}
