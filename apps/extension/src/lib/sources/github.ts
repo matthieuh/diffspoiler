@@ -42,7 +42,13 @@ export function createGitHubSource(
     return (await response.json()) as T;
   }
 
-  const fetchPull = () => get<PullResponse>(pullUrl);
+  // One /pulls/N request per source instance, shared by fetchHead and fetchFiles.
+  let pull: Promise<PullResponse> | null = null;
+  const fetchPull = () => {
+    pull ??= get<PullResponse>(pullUrl);
+    return pull;
+  };
+  const fetchPage = (page: number) => get<PullFile[]>(`${pullUrl}/files?per_page=${PER_PAGE}&page=${page}`);
 
   return {
     async fetchHead(): Promise<PrHead> {
@@ -50,19 +56,21 @@ export function createGitHubSource(
       return { headSha: pr.head.sha, additions: pr.additions, deletions: pr.deletions, fileCount: pr.changed_files };
     },
     async fetchFiles(): Promise<FileStat[]> {
-      const pr = await fetchPull();
+      // Page 1 does not depend on changed_files, so it goes out with the head request.
+      const [pr, firstPage] = await Promise.all([fetchPull(), fetchPage(1)]);
       const pageCount = Math.ceil(Math.min(pr.changed_files, MAX_FILES) / PER_PAGE);
       const pages: PullFile[][] = new Array(pageCount);
-      let next = 0;
+      pages[0] = firstPage;
+      let next = 1;
 
       async function worker(): Promise<void> {
         while (next < pageCount) {
           const index = next++;
-          pages[index] = await get<PullFile[]>(`${pullUrl}/files?per_page=${PER_PAGE}&page=${index + 1}`);
+          pages[index] = await fetchPage(index + 1);
         }
       }
 
-      await Promise.all(Array.from({ length: Math.min(concurrency, pageCount) }, worker));
+      await Promise.all(Array.from({ length: Math.min(concurrency, Math.max(0, pageCount - 1)) }, worker));
       return pages.flat().map((f) => ({ path: f.filename, additions: f.additions, deletions: f.deletions }));
     },
   };
