@@ -26,7 +26,7 @@ Rules apply in this order: a snapshot under `__tests__/` counts as Tests, not Ot
 
 | Bucket | What goes in it |
 |---|---|
-| Tests | `*.spec.*`, `*.test.*`, `__tests__/`, `test/`, `tests/`, `e2e/`, `*_test.go`, `test_*.py`, `*_spec.rb` |
+| Tests | `*.spec.*`, `*.test.*` (incl. `*.e2e-spec.*`), `__tests__/`, `test/`, `tests/`, `e2e/`, `*_test.go`, `test_*.py`, `*_spec.rb` |
 | Evals | files under `evals/` or `eval/`, and `*.eval.*` |
 | Other | lockfiles, `migrations/`, `dist/`, `vendor/`, `__generated__/`, `__snapshots__/`, `docs/`, `*.generated.*`, `*.min.js/css`, `*.snap`, `*.md`/`*.mdx`, JSON/YAML/PO files under `locales/` or `i18n/` |
 | Runtime | everything else |

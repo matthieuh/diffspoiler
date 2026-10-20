@@ -1,7 +1,7 @@
 import type { BucketId } from './types.ts';
 
 const TEST_DIRS = new Set(['__tests__', 'test', 'tests', 'e2e']);
-const TEST_FILES = [/\.(spec|test)\.[^.]+(\.[^.]+)?$/, /_test\.go$/, /^test_.+\.py$/, /_spec\.rb$/];
+const TEST_FILES = [/\.(?:\w+-)?(spec|test)\.[^.]+(\.[^.]+)?$/, /_test\.go$/, /^test_.+\.py$/, /_spec\.rb$/];
 
 const EVAL_DIRS = new Set(['evals', 'eval']);
 const EVAL_FILES = [/\.eval\.[^.]+$/];

@@ -10,7 +10,7 @@ export const BUCKETS: Record<BucketId, { label: string; description: string; col
   },
   tests: {
     label: 'Tests',
-    description: 'Tests: *.spec.*, *.test.*, __tests__/, test(s)/, e2e/, *_test.go, test_*.py, *_spec.rb.',
+    description: 'Tests: *.spec.*, *.test.*, *.e2e-spec.*, __tests__/, test(s)/, e2e/, *_test.go, test_*.py, *_spec.rb.',
     color: '#a371f7',
   },
   evals: {
@@ -26,4 +26,4 @@ export const BUCKETS: Record<BucketId, { label: string; description: string; col
 };
 
 // Bump whenever the classification rules change: it invalidates cached results.
-export const RULES_VERSION = 1;
+export const RULES_VERSION = 2;
