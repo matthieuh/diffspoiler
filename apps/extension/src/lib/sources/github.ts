@@ -72,6 +72,8 @@ export function createGitHubSource(
       }
 
       await Promise.all(Array.from({ length: Math.min(concurrency, Math.max(0, pageCount - 1)) }, worker));
+      // An aborted run may have skipped pages; never resolve with truncated data.
+      signal?.throwIfAborted();
       return pages.flat().map((f) => ({ path: f.filename, additions: f.additions, deletions: f.deletions }));
     },
   };

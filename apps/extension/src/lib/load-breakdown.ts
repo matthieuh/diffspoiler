@@ -10,23 +10,27 @@ export interface Loaded {
 }
 
 export async function loadBreakdown(ref: PrRef, source: StatsSource, cache: BreakdownCache): Promise<Loaded> {
-  // The files request does not depend on the head, so both go out together; a cache hit discards it.
+  // The files request does not depend on the head, so both go out together; anything but a cache miss discards it.
   const headPromise = source.fetchHead();
   const abort = new AbortController();
   const filesPromise = source.fetchFiles(abort.signal);
   filesPromise.catch(() => {});
-  const head = await headPromise;
-  const key = prKey(ref);
+  let needFiles = false;
+  try {
+    const head = await headPromise;
+    const key = prKey(ref);
 
-  const cached = await cache.get(key, head.headSha);
-  if (cached) {
-    abort.abort();
-    return { breakdown: cached, head };
+    const cached = await cache.get(key, head.headSha);
+    if (cached) return { breakdown: cached, head };
+
+    needFiles = true;
+    const files = await filesPromise;
+    // GitLab's page counter is capped at 3000 files and can be lower than what we fetched.
+    const breakdown = computeBreakdown(files, Math.max(0, head.fileCount - files.length));
+    await cache.set(key, head.headSha, breakdown);
+    return { breakdown, head };
+  } finally {
+    // Only the cache-miss path consumes the files; every other exit drops them.
+    if (!needFiles) abort.abort();
   }
-
-  const files = await filesPromise;
-  // GitLab's page counter is capped at 3000 files and can be lower than what we fetched.
-  const breakdown = computeBreakdown(files, Math.max(0, head.fileCount - files.length));
-  await cache.set(key, head.headSha, breakdown);
-  return { breakdown, head };
 }
