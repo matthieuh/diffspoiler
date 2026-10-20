@@ -21,7 +21,7 @@ function memoryCache(): BreakdownCache & { set: ReturnType<typeof vi.fn> } {
 }
 
 function source(head: PrHead, files: FileStat[]) {
-  return { fetchHead: vi.fn(async () => head), fetchFiles: vi.fn(async () => files) } satisfies StatsSource;
+  return { fetchHead: vi.fn(async () => head), fetchFiles: vi.fn(async (_signal?: AbortSignal) => files) } satisfies StatsSource;
 }
 
 const files = (n: number): FileStat[] =>
@@ -38,6 +38,22 @@ describe('loadBreakdown', () => {
     expect(second.fetchHead).toHaveBeenCalledTimes(1);
     expect(loaded.breakdown.total.additions).toBe(6);
     expect(loaded.head).toEqual(head);
+  });
+
+  it('aborts the files fetch on a cache hit', async () => {
+    const cache = memoryCache();
+    const head = { headSha: 'a', additions: 6, deletions: 3, fileCount: 3 };
+    await loadBreakdown(ref, source(head, files(3)), cache);
+    const second = source(head, files(3));
+    await loadBreakdown(ref, second, cache);
+    const signal = second.fetchFiles.mock.calls[0]![0]!;
+    expect(signal.aborted).toBe(true);
+  });
+
+  it('does not abort the files fetch on a miss', async () => {
+    const src = source({ headSha: 'a', additions: 0, deletions: 0, fileCount: 2 }, files(2));
+    await loadBreakdown(ref, src, memoryCache());
+    expect(src.fetchFiles.mock.calls[0]![0]!.aborted).toBe(false);
   });
 
   it('a rejecting fetchFiles on a cache hit causes no unhandled rejection', async () => {

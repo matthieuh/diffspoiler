@@ -9,7 +9,7 @@ export interface PrHead {
 
 export interface StatsSource {
   fetchHead(): Promise<PrHead>;
-  fetchFiles(): Promise<FileStat[]>;
+  fetchFiles(signal?: AbortSignal): Promise<FileStat[]>;
 }
 
 export class AuthRequiredError extends Error {

@@ -12,13 +12,17 @@ export interface Loaded {
 export async function loadBreakdown(ref: PrRef, source: StatsSource, cache: BreakdownCache): Promise<Loaded> {
   // The files request does not depend on the head, so both go out together; a cache hit discards it.
   const headPromise = source.fetchHead();
-  const filesPromise = source.fetchFiles();
+  const abort = new AbortController();
+  const filesPromise = source.fetchFiles(abort.signal);
   filesPromise.catch(() => {});
   const head = await headPromise;
   const key = prKey(ref);
 
   const cached = await cache.get(key, head.headSha);
-  if (cached) return { breakdown: cached, head };
+  if (cached) {
+    abort.abort();
+    return { breakdown: cached, head };
+  }
 
   const files = await filesPromise;
   // GitLab's page counter is capped at 3000 files and can be lower than what we fetched.

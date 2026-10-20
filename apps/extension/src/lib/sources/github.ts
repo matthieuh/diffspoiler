@@ -27,11 +27,11 @@ export function createGitHubSource(
   const concurrency = Math.max(1, deps.concurrency ?? 6);
   const pullUrl = `${API}/repos/${ref.repo}/pulls/${ref.number}`;
 
-  async function get<T>(url: string): Promise<T> {
+  async function get<T>(url: string, signal?: AbortSignal): Promise<T> {
     const headers: Record<string, string> = { Accept: 'application/vnd.github+json' };
     if (deps.token !== null) headers.Authorization = `Bearer ${deps.token}`;
 
-    const response = await deps.fetchFn(url, { headers });
+    const response = await deps.fetchFn(url, { headers, signal });
 
     // GitHub answers 404 for private repos the token (or lack of one) cannot see.
     if (response.status === 401 || response.status === 404) throw new AuthRequiredError();
@@ -48,25 +48,26 @@ export function createGitHubSource(
     pull ??= get<PullResponse>(pullUrl);
     return pull;
   };
-  const fetchPage = (page: number) => get<PullFile[]>(`${pullUrl}/files?per_page=${PER_PAGE}&page=${page}`);
+  const fetchPage = (page: number, signal?: AbortSignal) =>
+    get<PullFile[]>(`${pullUrl}/files?per_page=${PER_PAGE}&page=${page}`, signal);
 
   return {
     async fetchHead(): Promise<PrHead> {
       const pr = await fetchPull();
       return { headSha: pr.head.sha, additions: pr.additions, deletions: pr.deletions, fileCount: pr.changed_files };
     },
-    async fetchFiles(): Promise<FileStat[]> {
+    async fetchFiles(signal?: AbortSignal): Promise<FileStat[]> {
       // Page 1 does not depend on changed_files, so it goes out with the head request.
-      const [pr, firstPage] = await Promise.all([fetchPull(), fetchPage(1)]);
+      const [pr, firstPage] = await Promise.all([fetchPull(), fetchPage(1, signal)]);
       const pageCount = Math.ceil(Math.min(pr.changed_files, MAX_FILES) / PER_PAGE);
       const pages: PullFile[][] = new Array(pageCount);
       pages[0] = firstPage;
       let next = 1;
 
       async function worker(): Promise<void> {
-        while (next < pageCount) {
+        while (next < pageCount && !signal?.aborted) {
           const index = next++;
-          pages[index] = await fetchPage(index + 1);
+          pages[index] = await fetchPage(index + 1, signal);
         }
       }
 
