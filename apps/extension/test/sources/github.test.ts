@@ -149,7 +149,9 @@ describe('github source', () => {
     const unhandled = vi.fn();
     process.on('unhandledRejection', unhandled);
 
-    await createGitHubSource(ref, { fetchFn, token: null }).fetchFiles(controller.signal).catch(() => {});
+    await expect(
+      createGitHubSource(ref, { fetchFn, token: null }).fetchFiles(controller.signal),
+    ).rejects.toMatchObject({ name: 'AbortError' });
     await new Promise((resolve) => setTimeout(resolve, 20));
     process.off('unhandledRejection', unhandled);
 

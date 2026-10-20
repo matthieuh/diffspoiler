@@ -50,6 +50,13 @@ describe('loadBreakdown', () => {
     expect(signal.aborted).toBe(true);
   });
 
+  it('aborts the files fetch and propagates the error when fetchHead rejects', async () => {
+    const src = source({ headSha: 'a', additions: 0, deletions: 0, fileCount: 2 }, files(2));
+    src.fetchHead.mockRejectedValue(new Error('head failed'));
+    await expect(loadBreakdown(ref, src, memoryCache())).rejects.toThrow('head failed');
+    expect(src.fetchFiles.mock.calls[0]![0]!.aborted).toBe(true);
+  });
+
   it('does not abort the files fetch on a miss', async () => {
     const src = source({ headSha: 'a', additions: 0, deletions: 0, fileCount: 2 }, files(2));
     await loadBreakdown(ref, src, memoryCache());
