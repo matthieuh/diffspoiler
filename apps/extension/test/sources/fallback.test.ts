@@ -55,6 +55,16 @@ describe('withFallback', () => {
     expect(create).toHaveBeenCalledTimes(1);
   });
 
+  it('with rate-limit fallback disabled, falls back on auth only', async () => {
+    const create = vi.fn(() => source('session'));
+    const authed = withFallback(source('rest', new AuthRequiredError()), create, { onRateLimit: false });
+    expect(await authed.fetchHead()).toEqual(head('session'));
+
+    const limited = withFallback(source('rest', new RateLimitedError()), create, { onRateLimit: false });
+    await expect(limited.fetchHead()).rejects.toBeInstanceOf(RateLimitedError);
+    expect(create).toHaveBeenCalledTimes(1);
+  });
+
   it('does not fall back on other errors', async () => {
     const create = vi.fn(() => source('session'));
     const combined = withFallback(source('rest', new Error('GitHub request failed: 500')), create);

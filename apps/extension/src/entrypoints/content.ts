@@ -1,3 +1,4 @@
+import { browser } from 'wxt/browser';
 import { createBreakdownCache } from '../lib/cache';
 import { committedLocationChanges } from '../lib/location';
 import { startMount } from '../lib/mount';
@@ -23,9 +24,9 @@ export default defineContentScript({
       }
       const token = await getGitHubToken();
       const rest = createGitHubSource(ref, { fetchFn, token });
-      if (token !== null) return rest;
-      // No token: private PRs (auth required) and a spent anonymous quota read the PR page's own data instead.
-      return withFallback(rest, () => createGitHubSessionSource(ref, { fetchFn }));
+      // Auth required (e.g. a token scoped to another owner) reads the PR page's own data; only a tokenless run also
+      // falls back when the anonymous quota is spent, since a token has its own quota.
+      return withFallback(rest, () => createGitHubSessionSource(ref, { fetchFn }), { onRateLimit: token === null });
     }
 
     const mount = startMount({
@@ -33,6 +34,8 @@ export default defineContentScript({
       doc: document,
       getSource,
       cache: createBreakdownCache(),
+      hasGitHubToken: async () => (await getGitHubToken()) !== null,
+      isContextValid: () => Boolean(browser.runtime?.id),
       onLocationChange: committedLocationChanges(window, (listener) =>
         ctx.addEventListener(window, 'wxt:locationchange', listener),
       ),

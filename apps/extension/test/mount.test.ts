@@ -13,6 +13,11 @@ const githubHeader = readFileSync(
   'utf8',
 );
 
+const gitlabHeader = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), 'fixtures/gitlab-overview.html'),
+  'utf8',
+);
+
 interface Deferred<T> {
   promise: Promise<T>;
   resolve(value: T): void;
@@ -71,7 +76,7 @@ const counter = () =>
 
 const observers: { disconnect: ReturnType<typeof vi.fn> }[] = [];
 
-function setup(url: string, body = githubHeader, getSource?: MountDeps['getSource']) {
+function setup(url: string, body = githubHeader, getSource?: MountDeps['getSource'], extra: Partial<MountDeps> = {}) {
   setUrl(url);
   document.body.innerHTML = new DOMParser().parseFromString(body, 'text/html').body.innerHTML;
   const sources = fakeSources();
@@ -85,6 +90,7 @@ function setup(url: string, body = githubHeader, getSource?: MountDeps['getSourc
       listeners.add(cb);
       return () => listeners.delete(cb);
     },
+    ...extra,
   });
   // Fires before updating location.href so tests prove the controller routes on the URL it is given.
   const navigate = (next: string) => {
@@ -118,8 +124,8 @@ describe('startMount', () => {
     document.body.innerHTML = '';
   });
 
-  function start(url: string, body?: string, getSource?: MountDeps['getSource']) {
-    const ctx = setup(url, body, getSource);
+  function start(url: string, body?: string, getSource?: MountDeps['getSource'], extra?: Partial<MountDeps>) {
+    const ctx = setup(url, body, getSource, extra);
     stop = ctx.mount.stop;
     return ctx;
   }
@@ -220,6 +226,65 @@ describe('startMount', () => {
     await vi.waitFor(() => expect(sources.requested('github:o/r#2')).toBe(true));
     sources.reject('github:o/r#2', new Error('rate-limited'));
     await vi.waitFor(() => expect(badge()!.style.display).toBe('none'));
+  });
+
+  const rejectingSource = (error: unknown) => async (): Promise<StatsSource> => ({
+    fetchHead: async () => {
+      throw error;
+    },
+    fetchFiles: async () => [],
+  });
+
+  it('shows the GitLab session copy without an options button on a GitLab auth error', async () => {
+    start('https://gitlab.com/g/p/-/merge_requests/1', gitlabHeader, rejectingSource(new AuthRequiredError()));
+    await vi.waitFor(() => expect(barClass()).toContain('auth'));
+    expect(badgeText()).toContain("Couldn't read this merge request with your GitLab session.");
+    expect(badge()!.shadowRoot!.querySelector('button')).toBeNull();
+  });
+
+  it('tells a GitHub token holder that the token cannot read the repo', async () => {
+    start('https://github.com/o/r/pull/1', githubHeader, rejectingSource(new AuthRequiredError()), {
+      hasGitHubToken: async () => true,
+    });
+    await vi.waitFor(() => expect(badgeText()).toContain("Your GitHub token can't read this repo."));
+    expect(badge()!.shadowRoot!.querySelector('button')).not.toBeNull();
+  });
+
+  it('asks a GitHub visitor without a token to add one', async () => {
+    start('https://github.com/o/r/pull/1', githubHeader, rejectingSource(new AuthRequiredError()), {
+      hasGitHubToken: async () => false,
+    });
+    await vi.waitFor(() => expect(badgeText()).toContain('add a GitHub token'));
+  });
+
+  it('stops itself when the extension context is invalidated', async () => {
+    let valid = true;
+    const { sources } = start('https://github.com/o/r/pull/1', githubHeader, undefined, {
+      isContextValid: () => valid,
+    });
+    expect(badge()).not.toBeNull();
+    valid = false;
+    document.body.append(document.createElement('p'));
+    await vi.waitFor(() => expect(badge()).toBeNull());
+    expect(observers.every((o) => o.disconnect.mock.calls.length > 0)).toBe(true);
+    expect(sources.requested('github:o/r#1')).toBe(true);
+  });
+
+  it('does not load anything when the context is already invalid', async () => {
+    const { sources } = start('https://github.com/o/r/pull/1', githubHeader, undefined, {
+      isContextValid: () => false,
+    });
+    expect(sources.requested('github:o/r#1')).toBe(false);
+    expect(badge()).toBeNull();
+  });
+
+  it('re-places the widget after the whole body is replaced', async () => {
+    start('https://github.com/o/r/pull/1');
+    expect(badge()).not.toBeNull();
+    const next = document.createElement('body');
+    next.innerHTML = new DOMParser().parseFromString(githubHeader, 'text/html').body.innerHTML;
+    document.documentElement.replaceChild(next, document.body);
+    await vi.waitFor(() => expect(next.querySelector('diffspoiler-badge')).not.toBeNull());
   });
 
   it('shows the widget after an in-app navigation from a non-PR page to a PR', async () => {
