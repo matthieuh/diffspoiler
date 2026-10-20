@@ -11,12 +11,13 @@ A small bar (Runtime / Tests / Evals / Other) appears in the title line of every
 - From the Chrome Web Store (unlisted): `<store link — coming soon>`
 - Or load it unpacked: download `diffspoiler-<version>-chrome.zip` from the repo's Releases, unzip it, open `chrome://extensions`, enable Developer mode, click "Load unpacked" and select the unzipped folder.
 
-No setup is needed on GitLab: it uses your logged-in session.
+No setup is needed on GitLab: it uses your logged-in session, and public MRs work logged out too. If GitLab refuses to serve an MR, the bar says so and suggests reloading the page.
 
 ## GitHub token (optional)
 
 - Public repos work without a token, through the GitHub API.
 - Private repos without a token use your logged-in github.com session instead. If the session can't read the repo either, the bar shows a prompt to add a token, with an "Open options" button.
+- With a token saved, a private PR the token can't read (for example a token scoped to another owner) falls back to your session; if that fails too, the bar says the token can't read the repo.
 - If you hit the anonymous API rate limit, or want to skip the session fallback, add a fine-grained token with read-only "Pull requests" access in the extension's options page.
 
 ## How files are bucketed
@@ -35,7 +36,7 @@ Paths are matched case-insensitively. Built-in rules only, no config file.
 ## Accuracy
 
 - Every changed line is counted, from the per-file counts the platform already computes (no diff parsing). The total is the sum of what was counted.
-- GitHub's API lists at most 3,000 files per PR. With the API (public repos, or a token), a larger PR shows "not counted: N files". On the logged-in session fallback, a PR over 3,000 files hides the bar instead; add a token to get the count.
+- GitHub's API lists at most 3,000 files per PR. A larger PR shows "not counted: N files", on the API and on the logged-in session fallback alike. The session fallback hides the bar only when GitHub itself flags its file count as capped.
 - GitLab's own counter stops at 3,000 files. diffspoiler counts every file, and when its total differs from the page's counter a footnote explains why.
 - If the data can't be read reliably (unexpected errors, the platform changed its pages), the bar is hidden rather than showing a wrong number.
 
