@@ -10,6 +10,9 @@ export type WidgetState =
   | { kind: 'auth-required' }
   | { kind: 'hidden' };
 
+// Mirrors .pop min-width; fallback when the popover has no layout box (non-rendering environments).
+const POPOVER_MIN_WIDTH = 250;
+
 const fmt = (n: number): string => n.toLocaleString('en-US');
 
 function el<K extends keyof HTMLElementTagNameMap>(
@@ -89,7 +92,14 @@ export function createWidget(doc: Document): { host: HTMLElement; setState(s: Wi
   const pop = el(doc, 'div', 'pop');
   root.append(style, bar, pop);
 
-  const open = () => host.setAttribute('open', '');
+  const open = () => {
+    host.setAttribute('open', '');
+    // Measured after opening: a display:none popover has no width.
+    host.removeAttribute('data-align');
+    const popWidth = pop.getBoundingClientRect().width || POPOVER_MIN_WIDTH;
+    const overflows = host.getBoundingClientRect().left + popWidth > (doc.defaultView?.innerWidth ?? Infinity);
+    if (overflows) host.setAttribute('data-align', 'end');
+  };
   const close = () => host.removeAttribute('open');
   host.addEventListener('mouseenter', open);
   host.addEventListener('focusin', open);

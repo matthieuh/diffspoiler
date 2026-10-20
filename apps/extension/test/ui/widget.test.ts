@@ -184,4 +184,38 @@ describe('widget', () => {
     process.off('unhandledRejection', unhandled);
     expect(unhandled).not.toHaveBeenCalled();
   });
+
+  describe('popover alignment', () => {
+    const stubHost = (host: HTMLElement, left: number) =>
+      vi.spyOn(host, 'getBoundingClientRect').mockReturnValue({
+        left,
+        right: left + 56,
+        top: 0,
+        bottom: 6,
+        width: 56,
+        height: 6,
+        x: left,
+        y: 0,
+        toJSON: () => ({}),
+      });
+
+    it('right-aligns the popover when left-aligned would overflow the viewport', () => {
+      const { host } = make();
+      vi.stubGlobal('innerWidth', 1440);
+      stubHost(host, 1360);
+      host.dispatchEvent(new MouseEvent('mouseenter'));
+      expect(host.hasAttribute('open')).toBe(true);
+      expect(host.getAttribute('data-align')).toBe('end');
+      vi.unstubAllGlobals();
+    });
+
+    it('keeps the default alignment near the left edge', () => {
+      const { host } = make();
+      vi.stubGlobal('innerWidth', 1440);
+      stubHost(host, 100);
+      host.dispatchEvent(new MouseEvent('mouseenter'));
+      expect(host.hasAttribute('data-align')).toBe(false);
+      vi.unstubAllGlobals();
+    });
+  });
 });
