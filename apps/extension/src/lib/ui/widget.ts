@@ -92,13 +92,16 @@ export function createWidget(doc: Document): { host: HTMLElement; setState(s: Wi
   const pop = el(doc, 'div', 'pop');
   root.append(style, bar, pop);
 
-  const open = () => {
-    host.setAttribute('open', '');
-    // Measured after opening: a display:none popover has no width.
+  // Measured while open (a display:none popover has no width); clientWidth excludes the scrollbar.
+  const align = () => {
     host.removeAttribute('data-align');
     const popWidth = pop.getBoundingClientRect().width || POPOVER_MIN_WIDTH;
-    const overflows = host.getBoundingClientRect().left + popWidth > (doc.defaultView?.innerWidth ?? Infinity);
-    if (overflows) host.setAttribute('data-align', 'end');
+    const viewportWidth = doc.documentElement.clientWidth || Infinity;
+    if (host.getBoundingClientRect().left + popWidth > viewportWidth) host.setAttribute('data-align', 'end');
+  };
+  const open = () => {
+    host.setAttribute('open', '');
+    align();
   };
   const close = () => host.removeAttribute('open');
   host.addEventListener('mouseenter', open);
@@ -131,6 +134,7 @@ export function createWidget(doc: Document): { host: HTMLElement; setState(s: Wi
     } else if (s.kind === 'ready') {
       renderReady(doc, bar, pop, s.breakdown, s.page);
     }
+    if (host.hasAttribute('open')) align();
   }
 
   setState({ kind: 'loading' });

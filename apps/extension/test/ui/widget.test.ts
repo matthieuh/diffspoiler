@@ -1,5 +1,5 @@
 import type { Breakdown } from '@diffspoiler/core/types';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { browser } from 'wxt/browser';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
 import { createWidget } from '../../src/lib/ui/widget';
@@ -186,6 +186,12 @@ describe('widget', () => {
   });
 
   describe('popover alignment', () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    const setViewport = (width: number) =>
+      vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(width);
     const stubHost = (host: HTMLElement, left: number) =>
       vi.spyOn(host, 'getBoundingClientRect').mockReturnValue({
         left,
@@ -198,24 +204,59 @@ describe('widget', () => {
         y: 0,
         toJSON: () => ({}),
       });
+    const hover = (host: HTMLElement) => host.dispatchEvent(new MouseEvent('mouseenter'));
 
     it('right-aligns the popover when left-aligned would overflow the viewport', () => {
       const { host } = make();
-      vi.stubGlobal('innerWidth', 1440);
+      setViewport(1440);
       stubHost(host, 1360);
-      host.dispatchEvent(new MouseEvent('mouseenter'));
+      hover(host);
       expect(host.hasAttribute('open')).toBe(true);
       expect(host.getAttribute('data-align')).toBe('end');
-      vi.unstubAllGlobals();
     });
 
     it('keeps the default alignment near the left edge', () => {
       const { host } = make();
-      vi.stubGlobal('innerWidth', 1440);
+      setViewport(1440);
       stubHost(host, 100);
-      host.dispatchEvent(new MouseEvent('mouseenter'));
+      hover(host);
       expect(host.hasAttribute('data-align')).toBe(false);
+    });
+
+    it('measures against the viewport without the scrollbar', () => {
+      const { host } = make();
+      setViewport(1425);
+      vi.stubGlobal('innerWidth', 1440);
+      stubHost(host, 1200);
+      hover(host);
       vi.unstubAllGlobals();
+      expect(host.getAttribute('data-align')).toBe('end');
+    });
+
+    it('clears the alignment when reopened near the left edge', () => {
+      const { host } = make();
+      setViewport(1440);
+      stubHost(host, 1360);
+      hover(host);
+      expect(host.getAttribute('data-align')).toBe('end');
+      host.dispatchEvent(new MouseEvent('mouseleave'));
+      stubHost(host, 100);
+      hover(host);
+      expect(host.hasAttribute('data-align')).toBe(false);
+    });
+
+    it('realigns when the content grows while the popover is open', () => {
+      const { host, root, setState } = make();
+      setViewport(1440);
+      stubHost(host, 1150);
+      const pop = root.querySelector('.pop')!;
+      const width = vi.spyOn(pop, 'getBoundingClientRect');
+      width.mockReturnValue({ width: 250 } as DOMRect);
+      hover(host);
+      expect(host.hasAttribute('data-align')).toBe(false);
+      width.mockReturnValue({ width: 306 } as DOMRect);
+      setState({ kind: 'ready', breakdown, page: null });
+      expect(host.getAttribute('data-align')).toBe('end');
     });
   });
 });
