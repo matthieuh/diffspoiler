@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="manifest.open_in_tab" content="true" />
+    <title>diffspoiler options</title>
+    <style>
+      body { font: 14px system-ui, sans-serif; max-width: 480px; margin: 32px auto; padding: 0 16px; }
+      label { display: block; font-weight: 600; margin-bottom: 6px; }
+      input { width: 100%; box-sizing: border-box; padding: 6px 8px; }
+      p { color: #57606a; }
+      button { margin-right: 8px; }
+    </style>
+  </head>
+  <body>
+    <label for="token">GitHub token (optional, only for private repos)</label>
+    <input id="token" type="password" autocomplete="off" spellcheck="false" />
+    <p>Create a fine-grained token with read-only 'Pull requests' access to the repos you review.</p>
+    <button id="save" type="button">Save</button>
+    <button id="clear" type="button">Clear</button>
+    <span id="status" role="status"></span>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
