@@ -3,7 +3,7 @@ import { classifyPath } from '../src/classify.ts';
 
 describe('classifyPath', () => {
   it.each([
-    'src/a.spec.ts', 'src/a.test.tsx', 'src/__tests__/a.ts', 'test/a.ts', 'tests/a.py', 'e2e/login.ts',
+    'src/a.spec.ts', 'src/a.controller.e2e-spec.ts', 'src/a.int-test.ts', 'src/a.test.tsx', 'src/__tests__/a.ts', 'test/a.ts', 'tests/a.py', 'e2e/login.ts',
     'pkg/a_test.go', 'app/test_models.py', 'spec/a_spec.rb', 'Tests/A.cs', 'src/__tests__/__snapshots__/a.snap',
     'src/__snapshots__/a.test.ts.snap',
   ])('%s -> tests', (path) => {
