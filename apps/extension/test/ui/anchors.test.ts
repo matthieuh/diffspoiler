@@ -38,6 +38,23 @@ describe('findAnchor', () => {
     expect(findAnchor('gitlab', doc)).toBeNull();
   });
 
+  it('treats a climbed element without "+N −N" text as no counter', () => {
+    const doc = new DOMParser().parseFromString(
+      `<div data-component="PageHeader">
+        <div data-component="PageHeader.Description"></div>
+        <div data-component="PH_Navigation"><div><span>+7</span><span>-3</span>
+          <div><div><div><div data-testid="addition diffstat"></div></div></div></div>
+        </div></div>
+      </div>`,
+      'text/html',
+    );
+
+    const found = findAnchor('github', doc);
+
+    expect(found?.anchor).toBe(doc.querySelector('[data-component="PageHeader.Description"]'));
+    expect(found?.counter).toBeNull();
+  });
+
   it('ignores a counter the browser reports as not rendered (GitLab keeps hidden tab panes in the DOM)', () => {
     const doc = load('gitlab-files');
     const counter = doc.querySelector('.diff-stats')!;

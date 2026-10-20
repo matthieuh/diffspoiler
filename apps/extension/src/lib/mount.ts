@@ -11,7 +11,8 @@ export interface MountDeps {
   doc: Document;
   getSource: (ref: PrRef) => Promise<StatsSource>;
   cache: BreakdownCache;
-  onLocationChange: (cb: () => void) => () => void;
+  /** Fires with the destination URL, possibly before `location.href` has changed. */
+  onLocationChange: (cb: (url: string) => void) => () => void;
 }
 
 type View = { kind: 'loading' } | { kind: 'auth-required' } | { kind: 'hidden' } | { kind: 'ready'; loaded: Loaded };
@@ -29,7 +30,7 @@ export function startMount(deps: MountDeps): { stop(): void } {
   const inflight = new Map<string, Promise<Loaded>>();
   const reportedMissing = new Set<string>();
 
-  let current: { ref: PrRef; key: string } | null = null;
+  let current: { ref: PrRef; key: string; url: string } | null = null;
   let view: View = { kind: 'loading' };
   let widget: ReturnType<typeof createWidget> | null = null;
   let counter: Element | null = null;
@@ -57,9 +58,8 @@ export function startMount(deps: MountDeps): { stop(): void } {
     const found = findAnchor(current.ref.host, doc);
     if (!found) {
       widget?.host.remove();
-      const url = win.location.href;
-      if (!reportedMissing.has(url)) {
-        reportedMissing.add(url);
+      if (!reportedMissing.has(current.url)) {
+        reportedMissing.add(current.url);
         console.debug('diffspoiler: no anchor');
       }
       return;
@@ -81,11 +81,17 @@ export function startMount(deps: MountDeps): { stop(): void } {
     if (created || counterChanged) paint();
   }
 
+  // Catches a navigation the location event missed or reported before it committed.
+  function locationMoved(): boolean {
+    const ref = parsePrUrl(win.location.href);
+    return (ref ? prKey(ref) : null) !== (current?.key ?? null);
+  }
+
   function schedulePlace(): void {
     if (frame) return;
     frame = win.requestAnimationFrame(() => {
       frame = 0;
-      guard(place);
+      guard(() => (locationMoved() ? route(win.location.href) : place()));
     });
   }
 
@@ -105,25 +111,30 @@ export function startMount(deps: MountDeps): { stop(): void } {
     counterText = null;
   }
 
+  // Never rejects: it is fired and forgotten.
   async function load(ref: PrRef, key: string): Promise<void> {
-    let pending = inflight.get(key);
-    if (!pending) {
-      pending = getSource(ref).then((source) => loadBreakdown(ref, source, cache));
-      inflight.set(key, pending);
-    }
     try {
-      const loaded = await pending;
-      results.set(key, loaded);
-      if (current?.key === key) setView({ kind: 'ready', loaded });
-    } catch (error) {
-      if (current?.key === key) setView(error instanceof AuthRequiredError ? { kind: 'auth-required' } : { kind: 'hidden' });
-    } finally {
-      inflight.delete(key);
-    }
+      let pending = inflight.get(key);
+      if (!pending) {
+        pending = (async () => loadBreakdown(ref, await getSource(ref), cache))();
+        inflight.set(key, pending);
+      }
+      let next: View;
+      try {
+        const loaded = await pending;
+        results.set(key, loaded);
+        next = { kind: 'ready', loaded };
+      } catch (error) {
+        next = error instanceof AuthRequiredError ? { kind: 'auth-required' } : { kind: 'hidden' };
+      } finally {
+        inflight.delete(key);
+      }
+      if (current?.key === key) setView(next);
+    } catch {}
   }
 
-  function route(): void {
-    const ref = parsePrUrl(win.location.href);
+  function route(url: string): void {
+    const ref = parsePrUrl(url);
     if (!ref) {
       current = null;
       teardown();
@@ -132,7 +143,7 @@ export function startMount(deps: MountDeps): { stop(): void } {
 
     const key = prKey(ref);
     const samePr = current?.key === key;
-    current = { ref, key };
+    current = { ref, key, url };
     observe();
     if (!samePr) {
       const loaded = results.get(key);
@@ -143,8 +154,8 @@ export function startMount(deps: MountDeps): { stop(): void } {
     place();
   }
 
-  const unsubscribe = deps.onLocationChange(() => guard(route));
-  guard(route);
+  const unsubscribe = deps.onLocationChange((url) => guard(() => route(url)));
+  guard(() => route(win.location.href));
 
   return {
     stop() {

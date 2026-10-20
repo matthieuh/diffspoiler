@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import type { FileStat } from '@diffspoiler/core/types';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BreakdownCache } from '../src/lib/cache';
-import { startMount } from '../src/lib/mount';
+import { type MountDeps, startMount } from '../src/lib/mount';
 import { type PrRef, prKey } from '../src/lib/pr-ref';
 import { AuthRequiredError, type PrHead, type StatsSource } from '../src/lib/sources/types';
 
@@ -71,24 +71,25 @@ const counter = () =>
 
 const observers: { disconnect: ReturnType<typeof vi.fn> }[] = [];
 
-function setup(url: string, body = githubHeader) {
+function setup(url: string, body = githubHeader, getSource?: MountDeps['getSource']) {
   setUrl(url);
   document.body.innerHTML = new DOMParser().parseFromString(body, 'text/html').body.innerHTML;
   const sources = fakeSources();
-  const listeners = new Set<() => void>();
+  const listeners = new Set<(url: string) => void>();
   const mount = startMount({
     win: window,
     doc: document,
-    getSource: sources.getSource,
+    getSource: getSource ?? sources.getSource,
     cache: memoryCache(),
     onLocationChange(cb) {
       listeners.add(cb);
       return () => listeners.delete(cb);
     },
   });
+  // Mirrors Chromium: the location event fires inside the navigate event, before location.href changes.
   const navigate = (next: string) => {
+    for (const cb of listeners) cb(next);
     setUrl(next);
-    for (const cb of listeners) cb();
   };
   return { mount, sources, navigate, listeners };
 }
@@ -117,8 +118,8 @@ describe('startMount', () => {
     document.body.innerHTML = '';
   });
 
-  function start(url: string, body?: string) {
-    const ctx = setup(url, body);
+  function start(url: string, body?: string, getSource?: MountDeps['getSource']) {
+    const ctx = setup(url, body, getSource);
     stop = ctx.mount.stop;
     return ctx;
   }
@@ -219,6 +220,55 @@ describe('startMount', () => {
     await vi.waitFor(() => expect(sources.requested('github:o/r#2')).toBe(true));
     sources.reject('github:o/r#2', new Error('rate-limited'));
     await vi.waitFor(() => expect(badge()!.style.display).toBe('none'));
+  });
+
+  it('shows the widget after an in-app navigation from a non-PR page to a PR', async () => {
+    const { sources, navigate } = start('https://github.com/o/r/pulls');
+    expect(badge()).toBeNull();
+
+    navigate('https://github.com/o/r/pull/1');
+
+    expect(badge()).not.toBeNull();
+    await vi.waitFor(() => expect(sources.requested('github:o/r#1')).toBe(true));
+    sources.resolve('github:o/r#1');
+    await vi.waitFor(() => expect(badgeText()).toContain('+111'));
+  });
+
+  it("never shows PR A's breakdown on PR B when the URL commits after the location event", async () => {
+    const { sources, navigate } = start('https://github.com/o/r/pull/1');
+    await vi.waitFor(() => expect(sources.requested('github:o/r#1')).toBe(true));
+    sources.resolve('github:o/r#1');
+    await vi.waitFor(() => expect(badgeText()).toContain('+111'));
+
+    navigate('https://github.com/o/r/pull/2');
+
+    expect(badgeText()).not.toContain('+111');
+    expect(barClass()).toContain('loading');
+    await vi.waitFor(() => expect(sources.requested('github:o/r#2')).toBe(true));
+    sources.resolve('github:o/r#2');
+    await vi.waitFor(() => expect(badgeText()).toContain('+222'));
+    expect(badgeText()).not.toContain('+111');
+  });
+
+  it('re-routes on the next DOM change when the URL moved without a location event', async () => {
+    const { sources } = start('https://github.com/o/r/pull/1');
+    await vi.waitFor(() => expect(sources.requested('github:o/r#1')).toBe(true));
+
+    setUrl('https://github.com/o/r/pull/2');
+    document.body.append(document.createElement('p'));
+
+    await vi.waitFor(() => expect(sources.requested('github:o/r#2')).toBe(true));
+    expect(barClass()).toContain('loading');
+  });
+
+  it('hides the widget when getSource throws synchronously, without an unhandled rejection', async () => {
+    const getSource = vi.fn((): Promise<StatsSource> => {
+      throw new Error('boom');
+    });
+    start('https://github.com/o/r/pull/1', undefined, getSource);
+
+    await vi.waitFor(() => expect(badge()!.style.display).toBe('none'));
+    expect(getSource).toHaveBeenCalledTimes(1);
   });
 
   it('stops observing and removes the widget on stop()', () => {
