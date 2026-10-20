@@ -155,7 +155,7 @@ describe('widget', () => {
     const titles = [...root.querySelectorAll<HTMLElement>('.info')].map((i) => i.title);
     expect(titles).toHaveLength(4);
     expect(titles[1]).toBe(
-      'Tests: *.spec.*, *.test.*, __tests__/, test(s)/, e2e/, *_test.go, test_*.py, *_spec.rb. 1 file.',
+      'Tests: *.spec.*, *.test.*, *.e2e-spec.*, __tests__/, test(s)/, e2e/, *_test.go, test_*.py, *_spec.rb. 1 file.',
     );
     expect(titles[0]).toMatch(/ 4 files\.$/);
   });
