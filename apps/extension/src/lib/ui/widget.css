@@ -11,6 +11,7 @@
 /* Bridges the host/popover gap so the pointer can reach the popover without mouseleave. */
 .pop::before { content: ''; position: absolute; left: 0; right: 0; top: -8px; height: 8px; }
 :host([open]) .pop { display: block; }
+:host([data-align='end']) .pop { left: auto; right: 0; }
 .row { display: flex; align-items: center; gap: 8px; padding: 2px 0; }
 .sw { width: 8px; height: 8px; border-radius: 2px; flex: none; }
 .lbl { flex: 1; }
