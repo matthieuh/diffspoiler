@@ -29,8 +29,9 @@ export default defineContentScript({
       onLocationChange(cb) {
         // ctx listeners only go away when the context is invalidated, so gate the callback instead.
         let active = true;
-        ctx.addEventListener(window, 'wxt:locationchange', () => {
-          if (active) cb();
+        // Chromium dispatches this from the Navigation API's navigate event, before location.href changes.
+        ctx.addEventListener(window, 'wxt:locationchange', (event) => {
+          if (active) cb(event.newUrl.href);
         });
         return () => {
           active = false;

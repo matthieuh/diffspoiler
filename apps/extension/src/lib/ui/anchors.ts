@@ -1,3 +1,5 @@
+import { parsePageCounter } from './page-counter';
+
 // Selectors come from the fixtures in test/fixtures (public pages, captured 2026-10-20).
 // GitHub (React header): meta line = PageHeader.Description; counter = the "+N -N" box holding the
 //   diffstat squares (data-testid), two levels above them. Legacy header (logged-out Files tab): .gh-header-meta + #diffstat.
@@ -25,6 +27,12 @@ const COUNTERS: Record<Host, CounterCandidate[]> = {
 // checkVisibility is missing outside real browsers; treat everything as rendered there.
 const rendered = (el: Element): boolean => typeof el.checkVisibility !== 'function' || el.checkVisibility();
 
+// Guards against markup drift (e.g. a climb landing on the wrong level): only a real "+N −N" text counts.
+function showsCounts(el: Element): boolean {
+  const page = parsePageCounter(el.textContent ?? '');
+  return page.additions !== null || page.capped;
+}
+
 function climb(el: Element, levels: number): Element | null {
   let node: Element | null = el;
   for (let i = 0; i < levels && node; i++) node = node.parentElement;
@@ -39,7 +47,7 @@ export function findAnchor(host: Host, doc: Document): { anchor: Element; counte
   for (const { selector, up = 0 } of COUNTERS[host]) {
     const match = doc.querySelector(selector);
     const el = match && climb(match, up);
-    if (el && rendered(el)) {
+    if (el && rendered(el) && showsCounts(el)) {
       counter = el;
       break;
     }
