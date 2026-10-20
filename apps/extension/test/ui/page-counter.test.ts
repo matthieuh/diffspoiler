@@ -33,6 +33,12 @@ describe('footnote', () => {
       'The page shows a capped count; diffspoiler counted every changed file.',
     );
   });
+  it('says "counted files" instead of "all files" when some files were not counted', () => {
+    const partial: Breakdown = { ...b(3285, 75478), total: { additions: 3285, deletions: 75478, fileCount: 3000 }, uncountedFiles: 500 };
+    expect(footnote(partial, { additions: 3000, deletions: 49876, capped: false })).toBe(
+      'The page shows +3,000 −49,876; diffspoiler counted +3,285 −75,478 across 3,000 counted files.',
+    );
+  });
   it('explains differing numbers', () => {
     expect(footnote(b(3285, 75478), { additions: 3000, deletions: 49876, capped: false })).toBe(
       'The page shows +3,000 −49,876; diffspoiler counted +3,285 −75,478 across all files.',
