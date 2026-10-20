@@ -7,7 +7,9 @@
 .bar.auth { background: transparent; outline: 1px dashed var(--mut); outline-offset: -1px; }
 @keyframes pulse { 50% { opacity: 0.2; } }
 :host(:focus-visible) .bar { outline: 2px solid #4493f8; outline-offset: 2px; }
-.pop { display: none; position: absolute; top: 14px; left: 0; z-index: 2147483647; min-width: 250px; padding: 10px 12px; border: 1px solid var(--bd); border-radius: 8px; background: var(--bg); color: var(--fg); box-shadow: 0 8px 24px rgba(1, 4, 9, 0.25); font: 12px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; white-space: nowrap; }
+.pop { display: none; margin-top: 8px; position: absolute; top: 6px; left: 0; z-index: 2147483647; min-width: 250px; padding: 10px 12px; border: 1px solid var(--bd); border-radius: 8px; background: var(--bg); color: var(--fg); box-shadow: 0 8px 24px rgba(1, 4, 9, 0.25); font: 12px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; white-space: nowrap; }
+/* Bridges the host/popover gap so the pointer can reach the popover without mouseleave. */
+.pop::before { content: ''; position: absolute; left: 0; right: 0; top: -8px; height: 8px; }
 :host([open]) .pop { display: block; }
 .row { display: flex; align-items: center; gap: 8px; padding: 2px 0; }
 .sw { width: 8px; height: 8px; border-radius: 2px; flex: none; }

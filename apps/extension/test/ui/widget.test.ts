@@ -147,4 +147,41 @@ describe('widget', () => {
     const light = make();
     expect(light.host.getAttribute('data-theme')).toBe('light');
   });
+
+  it('leaves no pointer gap between the host and the popover', () => {
+    const { root } = make();
+    const css = root.querySelector('style')!.textContent ?? '';
+    expect(css).not.toBe('');
+    const pop = /\.pop\s*\{([^}]*)\}/.exec(css)![1]!;
+    const bridge = /\.pop::before\s*\{([^}]*)\}/.exec(css)?.[1] ?? '';
+    const px = (src: string, prop: string) => Number(new RegExp(`(?:^|[\\s;])${prop}:\\s*(-?\\d+)px`).exec(src)?.[1]);
+    expect(px(pop, 'top')).toBe(6);
+    expect(bridge).not.toBe('');
+    expect(px(bridge, 'height')).toBeGreaterThanOrEqual(px(pop, 'margin-top'));
+  });
+
+  it('keeps the popover open when focus moves inside it, closes when it leaves', () => {
+    const { host, setState, root } = make();
+    setState({ kind: 'auth-required' });
+    const button = root.querySelector('button')!;
+    host.dispatchEvent(new Event('focusin'));
+    host.dispatchEvent(new FocusEvent('focusout', { relatedTarget: button }));
+    expect(host.hasAttribute('open')).toBe(true);
+    const outside = document.createElement('input');
+    document.body.append(outside);
+    host.dispatchEvent(new FocusEvent('focusout', { relatedTarget: outside }));
+    expect(host.hasAttribute('open')).toBe(false);
+  });
+
+  it('does not surface an unhandled rejection when sendMessage fails', async () => {
+    const { setState, root } = make();
+    const unhandled = vi.fn();
+    process.on('unhandledRejection', unhandled);
+    vi.spyOn(browser.runtime, 'sendMessage').mockRejectedValue(new Error('Extension context invalidated.'));
+    setState({ kind: 'auth-required' });
+    root.querySelector('button')!.click();
+    await new Promise((r) => setTimeout(r, 10));
+    process.off('unhandledRejection', unhandled);
+    expect(unhandled).not.toHaveBeenCalled();
+  });
 });

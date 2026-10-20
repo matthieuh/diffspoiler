@@ -94,7 +94,11 @@ export function createWidget(doc: Document): { host: HTMLElement; setState(s: Wi
   host.addEventListener('mouseenter', open);
   host.addEventListener('focusin', open);
   host.addEventListener('mouseleave', close);
-  host.addEventListener('focusout', close);
+  host.addEventListener('focusout', (e) => {
+    const next = e.relatedTarget;
+    if (next instanceof Node && (next === host || host.contains(next) || root.contains(next))) return;
+    close();
+  });
 
   function setState(s: WidgetState): void {
     bar.replaceChildren();
@@ -111,7 +115,7 @@ export function createWidget(doc: Document): { host: HTMLElement; setState(s: Wi
       const btn = el(doc, 'button', '', 'Open options');
       btn.type = 'button';
       btn.addEventListener('click', () => {
-        void browser.runtime.sendMessage({ type: 'open-options' });
+        browser.runtime.sendMessage({ type: 'open-options' }).catch(() => {});
       });
       pop.append(btn);
     } else if (s.kind === 'ready') {
