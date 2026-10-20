@@ -28,16 +28,53 @@ const files = (n: number): FileStat[] =>
   Array.from({ length: n }, (_, i) => ({ path: `src/f${i}.ts`, additions: 2, deletions: 1 }));
 
 describe('loadBreakdown', () => {
-  it('skips fetchFiles on a cache hit', async () => {
+  it('returns the cached breakdown on a hit without awaiting files', async () => {
     const cache = memoryCache();
     const head = { headSha: 'a', additions: 6, deletions: 3, fileCount: 3 };
     await loadBreakdown(ref, source(head, files(3)), cache);
     const second = source(head, files(3));
+    second.fetchFiles.mockImplementation(() => new Promise<FileStat[]>(() => {}));
     const loaded = await loadBreakdown(ref, second, cache);
     expect(second.fetchHead).toHaveBeenCalledTimes(1);
-    expect(second.fetchFiles).not.toHaveBeenCalled();
     expect(loaded.breakdown.total.additions).toBe(6);
     expect(loaded.head).toEqual(head);
+  });
+
+  it('a rejecting fetchFiles on a cache hit causes no unhandled rejection', async () => {
+    const cache = memoryCache();
+    const head = { headSha: 'a', additions: 6, deletions: 3, fileCount: 3 };
+    await loadBreakdown(ref, source(head, files(3)), cache);
+    const unhandled = vi.fn();
+    process.on('unhandledRejection', unhandled);
+    const second = source(head, files(3));
+    second.fetchFiles.mockImplementation(async () => {
+      await new Promise((r) => setTimeout(r, 5));
+      throw new Error('boom');
+    });
+    const loaded = await loadBreakdown(ref, second, cache);
+    await new Promise((r) => setTimeout(r, 30));
+    process.off('unhandledRejection', unhandled);
+    expect(loaded.breakdown.total.additions).toBe(6);
+    expect(unhandled).not.toHaveBeenCalled();
+  });
+
+  it('starts fetchHead and fetchFiles before either resolves', async () => {
+    const started: string[] = [];
+    const src: StatsSource = {
+      fetchHead: vi.fn(async () => {
+        started.push('head');
+        await new Promise((r) => setTimeout(r, 5));
+        return { headSha: 'a', additions: 0, deletions: 0, fileCount: 2 };
+      }),
+      fetchFiles: vi.fn(async () => {
+        started.push('files');
+        await new Promise((r) => setTimeout(r, 5));
+        return files(2);
+      }),
+    };
+    const pending = loadBreakdown(ref, src, memoryCache());
+    expect(started).toEqual(['head', 'files']);
+    await pending;
   });
 
   it('computes and stores on a miss, fetching each once', async () => {

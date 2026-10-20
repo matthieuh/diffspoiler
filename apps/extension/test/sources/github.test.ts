@@ -98,6 +98,39 @@ describe('github source', () => {
     expect(calls.filter((c) => c.url.includes('/files'))).toHaveLength(30);
   });
 
+  it('a fetchHead + fetchFiles pair issues exactly one pulls/N request', async () => {
+    const { calls, fetchFn } = fakeFetch(filesResponder(250));
+    const source = createGitHubSource(ref, { fetchFn, token: null });
+    const [head, files] = await Promise.all([source.fetchHead(), source.fetchFiles()]);
+
+    expect(head.fileCount).toBe(250);
+    expect(files).toHaveLength(250);
+    expect(calls.filter((c) => !c.url.includes('/files'))).toHaveLength(1);
+  });
+
+  it('requests files page 1 before the head response resolves', async () => {
+    const requested: string[] = [];
+    let releaseHead!: () => void;
+    const headGate = new Promise<void>((resolve) => {
+      releaseHead = resolve;
+    });
+    const respond = filesResponder(150);
+    const fetchFn = (async (url: string) => {
+      requested.push(url);
+      if (!url.includes('/files')) await headGate;
+      return respond(url);
+    }) as unknown as typeof fetch;
+
+    const pending = createGitHubSource(ref, { fetchFn, token: null }).fetchFiles();
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    expect(requested).toEqual([
+      'https://api.github.com/repos/o/r/pulls/12',
+      'https://api.github.com/repos/o/r/pulls/12/files?per_page=100&page=1',
+    ]);
+    releaseHead();
+    expect(await pending).toHaveLength(150);
+  });
+
   it.each([
     ['404 without token', 404, null],
     ['401 without token', 401, null],
