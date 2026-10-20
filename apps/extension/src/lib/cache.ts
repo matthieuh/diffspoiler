@@ -1,14 +1,15 @@
 import { RULES_VERSION } from '@diffspoiler/core/rules';
 import type { Breakdown } from '@diffspoiler/core/types';
 import { browser } from 'wxt/browser';
+import type { PrHead } from './sources/types';
 
 export interface BreakdownCache {
-  get(key: string, headSha: string): Promise<Breakdown | null>;
-  set(key: string, headSha: string, breakdown: Breakdown): Promise<void>;
+  get(key: string, head: PrHead): Promise<Breakdown | null>;
+  set(key: string, head: PrHead, breakdown: Breakdown): Promise<void>;
 }
 
-interface Entry {
-  headSha: string;
+// The head totals are part of the key: a retargeted PR/MR keeps its head SHA but changes its diff.
+interface Entry extends PrHead {
   at: number;
   breakdown: Breakdown;
 }
@@ -21,20 +22,26 @@ export function createBreakdownCache(opts: { max?: number } = {}): BreakdownCach
   const storageKey = (key: string) => `${PREFIX}${RULES_VERSION}:${key}`;
 
   return {
-    async get(key, headSha) {
+    async get(key, head) {
       try {
         const name = storageKey(key);
         const entry = (await browser.storage.local.get(name))[name] as Entry | undefined;
-        return entry && entry.headSha === headSha ? entry.breakdown : null;
+        const hit =
+          entry &&
+          entry.headSha === head.headSha &&
+          entry.additions === head.additions &&
+          entry.deletions === head.deletions &&
+          entry.fileCount === head.fileCount;
+        return hit ? entry.breakdown : null;
       } catch {
         return null;
       }
     },
 
-    async set(key, headSha, breakdown) {
+    async set(key, head, breakdown) {
       try {
         const name = storageKey(key);
-        await browser.storage.local.set({ [name]: { headSha, at: Date.now(), breakdown } satisfies Entry });
+        await browser.storage.local.set({ [name]: { ...head, at: Date.now(), breakdown } satisfies Entry });
 
         const all = await browser.storage.local.get(null);
         const cached = Object.entries(all)

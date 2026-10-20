@@ -10,12 +10,12 @@ const ref: PrRef = { host: 'github', repo: 'o/r', number: 1 };
 function memoryCache(): BreakdownCache & { set: ReturnType<typeof vi.fn> } {
   const store = new Map<string, any>();
   return {
-    get: vi.fn(async (key: string, sha: string) => {
+    get: vi.fn(async (key: string, h: PrHead) => {
       const e = store.get(key);
-      return e && e.sha === sha ? e.b : null;
+      return e && JSON.stringify(e.h) === JSON.stringify(h) ? e.b : null;
     }),
-    set: vi.fn(async (key: string, sha: string, b) => {
-      store.set(key, { sha, b });
+    set: vi.fn(async (key: string, h: PrHead, b) => {
+      store.set(key, { h, b });
     }),
   };
 }
@@ -38,6 +38,16 @@ describe('loadBreakdown', () => {
     expect(second.fetchHead).toHaveBeenCalledTimes(1);
     expect(loaded.breakdown.total.additions).toBe(6);
     expect(loaded.head).toEqual(head);
+  });
+
+  it('misses when the head totals changed under the same SHA, and uses the fetched files', async () => {
+    const cache = memoryCache();
+    await loadBreakdown(ref, source({ headSha: 'a', additions: 6, deletions: 3, fileCount: 3 }, files(3)), cache);
+    const rebased = source({ headSha: 'a', additions: 2, deletions: 1, fileCount: 1 }, files(1));
+    const { breakdown } = await loadBreakdown(ref, rebased, cache);
+    expect(rebased.fetchFiles).toHaveBeenCalledTimes(1);
+    expect(rebased.fetchFiles.mock.calls[0]![0]!.aborted).toBe(false);
+    expect(breakdown.total).toEqual({ additions: 2, deletions: 1, fileCount: 1 });
   });
 
   it('aborts the files fetch on a cache hit', async () => {
@@ -107,7 +117,7 @@ describe('loadBreakdown', () => {
     expect(src.fetchHead).toHaveBeenCalledTimes(1);
     expect(src.fetchFiles).toHaveBeenCalledTimes(1);
     expect(breakdown.total).toEqual({ additions: 4, deletions: 2, fileCount: 2 });
-    expect(cache.set).toHaveBeenCalledWith('github:o/r#1', 'a', breakdown);
+    expect(cache.set).toHaveBeenCalledWith('github:o/r#1', { headSha: 'a', additions: 0, deletions: 0, fileCount: 2 }, breakdown);
   });
 
   it('reports uncounted files when the page counter exceeds the files fetched', async () => {
