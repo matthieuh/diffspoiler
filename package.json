@@ -1,6 +1,7 @@
 {
   "name": "diffspoiler",
   "private": true,
+  "license": "MIT",
   "version": "0.1.0",
   "packageManager": "pnpm@10.33.0",
   "scripts": {
