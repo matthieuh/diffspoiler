@@ -15,5 +15,5 @@ Queries are the ones in `apps/extension/src/lib/sources/gitlab.ts`. Timings are 
 - `diffStats` itself looks complete (3285 distinct paths, no duplicates); no truncation seen.
 - Normal MRs: summary and `diffStats` agree exactly and both calls are well under 1 s.
 - On the 3,285-file MR the files query took 3.5 s, over the 1 s budget.
-- The `fileCount − files.length` rule for "not counted" breaks above 3000 files: it goes negative (3000 − 3285). Task 6 should trust `files.length` and the `diffStats` sums, and treat the summary only as the page's own (capped) counter, showing a footnote when they differ.
+- The `fileCount − files.length` rule for "not counted" breaks above 3000 files: it goes negative (3000 − 3285). The extension trusts `files.length` and the `diffStats` sums instead, and treats the summary only as the page's own (capped) counter, showing a footnote when they differ.
 - Only one MR above 1,000 files was found in the 4,000 most recently updated merged MRs of gitlab-org/gitlab; no 1,000-2,999 file MR to check the range below the cap.
