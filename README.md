@@ -9,7 +9,7 @@ A small bar (Runtime / Tests / Evals / Other) appears in the title line of every
 ## Install
 
 - From the Chrome Web Store (unlisted): `<store link — coming soon>`
-- Or load it unpacked: download `diffspoiler-<version>-chrome.zip` from the repo's Releases, unzip it, open `chrome://extensions`, enable Developer mode, click "Load unpacked" and select the unzipped folder.
+- Or load it unpacked: download `diffspoiler-<version>-chrome.zip` from [Releases](https://github.com/matthieuh/diffspoiler/releases), unzip it, open `chrome://extensions`, enable Developer mode, click "Load unpacked" and select the unzipped folder.
 
 No setup is needed on GitLab: it uses your logged-in session, and public MRs work logged out too. If GitLab refuses to serve an MR, the bar says so and suggests reloading the page.
 
@@ -40,6 +40,10 @@ Paths are matched case-insensitively. Built-in rules only, no config file.
 - GitLab's own counter stops at 3,000 files. diffspoiler counts every file, and when its total differs from the page's counter a footnote explains why.
 - If the data can't be read reliably (unexpected errors, the platform changed its pages), the bar is hidden rather than showing a wrong number.
 
+## Privacy
+
+diffspoiler only talks to `github.com`, `api.github.com` and `gitlab.com`: no analytics, no other server. A GitHub token, if you save one, stays in the extension's local storage and is only sent to `api.github.com`.
+
 ## Development
 
 Requires Node 22 and pnpm 10.33.
@@ -54,3 +58,11 @@ pnpm zip         # store package in apps/extension/.output/
 ```
 
 `packages/core` holds the pure classification and counting logic; `apps/extension` is the WXT (Manifest V3) extension.
+
+## Contributing
+
+Issues and pull requests are welcome, see [CONTRIBUTING.md](CONTRIBUTING.md). Report security issues privately, as described in [SECURITY.md](SECURITY.md).
+
+## License
+
+[MIT](LICENSE)
